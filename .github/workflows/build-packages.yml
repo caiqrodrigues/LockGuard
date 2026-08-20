@@ -1,0 +1,71 @@
+name: Build Web and Extension Packages
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "apps/web/**"
+      - "apps/browser-extension/**"
+      - ".github/workflows/build-packages.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  packages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Validate source
+        run: |
+          node --check apps/web/app.js
+          node --check apps/browser-extension/service-worker.js
+          node --check apps/browser-extension/content.js
+          node --check apps/browser-extension/popup.js
+          node -e "const m=require('./apps/browser-extension/manifest.json'); if(m.version!=='0.0.1') process.exit(1)"
+          node -e "const p=require('./apps/web/package.json'); if(p.version!=='0.7.3') process.exit(1)"
+
+      - name: Package Web and Extension
+        run: |
+          mkdir -p release/web release/extension
+          cp -R apps/web/. release/web/
+          rm -rf release/web/node_modules release/web/dist
+          cp -R apps/browser-extension/. release/extension/
+          cd release
+          zip -qr LockGuard-Web-v0.7.3.zip web
+          zip -qr LockGuard-Extension-v0.0.1.zip extension
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LockGuard-Web-v0.7.3
+          path: release/LockGuard-Web-v0.7.3.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LockGuard-Extension-v0.0.1
+          path: release/LockGuard-Extension-v0.0.1.zip
+
+      - name: Persist package status
+        if: always()
+        run: |
+          mkdir -p ci-status
+          {
+            echo "workflow=Build Web and Extension Packages"
+            echo "web_version=0.7.3"
+            echo "extension_version=0.0.1"
+            echo "commit=${GITHUB_SHA}"
+            echo "outcome=${{ job.status }}"
+            echo "run_id=${GITHUB_RUN_ID}"
+            echo "updated=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } > ci-status/packages-latest.txt
+          git config user.name "LockGuard CI"
+          git config user.email "actions@users.noreply.github.com"
+          git add ci-status/packages-latest.txt
+          git commit -m "ci(packages): record package status [skip ci]" || exit 0
+          git pull --rebase origin main
+          git push origin HEAD:main
