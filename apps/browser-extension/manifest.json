@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "LockGuard",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Autofill seguro para credenciais desbloqueadas no LockGuard.",
   "permissions": ["storage", "tabs"],
   "host_permissions": ["http://*/*", "https://*/*"],
