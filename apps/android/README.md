@@ -60,11 +60,13 @@ A implementação não grava a senha mestra em texto aberto. Caso a sessão Web 
 - Fallback para login/senha quando biometria não estiver disponível.
 - Interface dimensionada pelo Web responsivo, funcionando em celulares compactos, telas grandes e tablets.
 
-## Build
+## Build e assinatura para testes
 
 O workflow `Build Android` gera:
 
 - `LockGuard-v0.0.2-debug.apk` — instalável diretamente para testes.
 - `LockGuard-v0.0.2-unsigned.apk` — release sem assinatura de distribuição.
 
-O último estado de build é registrado automaticamente em `ci-status/android-latest.txt`.
+A partir da linha 0.0.2, o CI preserva uma identidade de assinatura de testes em cache privado do GitHub Actions e valida o APK com `apksigner` e `aapt` antes de publicar o artefato. Isso permite atualizações por cima nas próximas builds de teste que usem a mesma identidade.
+
+O último estado de build é registrado automaticamente em `ci-status/android-latest.txt`, e os dados de validação ficam em `ci-status/android-apk-validation.txt`.
