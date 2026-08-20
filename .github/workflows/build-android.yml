@@ -29,10 +29,10 @@ jobs:
       - name: Collect APKs
         run: |
           mkdir -p release/android
-          cp apps/android/app/build/outputs/apk/debug/app-debug.apk release/android/LockGuard-v0.7.03-debug.apk
-          cp apps/android/app/build/outputs/apk/release/app-release-unsigned.apk release/android/LockGuard-v0.7.03-unsigned.apk
+          cp apps/android/app/build/outputs/apk/debug/app-debug.apk release/android/LockGuard-v0.0.2-debug.apk
+          cp apps/android/app/build/outputs/apk/release/app-release-unsigned.apk release/android/LockGuard-v0.0.2-unsigned.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: LockGuard-Android-v0.7.03
+          name: LockGuard-Android-v0.0.2
           path: release/android/*.apk
           if-no-files-found: error
