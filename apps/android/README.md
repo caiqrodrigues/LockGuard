@@ -67,6 +67,6 @@ O workflow `Build Android` gera:
 - `LockGuard-v0.0.2-debug.apk` — instalável diretamente para testes.
 - `LockGuard-v0.0.2-unsigned.apk` — release sem assinatura de distribuição.
 
-A partir da linha 0.0.2, o CI preserva uma identidade de assinatura de testes em cache privado do GitHub Actions e valida o APK com `apksigner` e `aapt` antes de publicar o artefato. Isso permite atualizações por cima nas próximas builds de teste que usem a mesma identidade.
+A partir da linha 0.0.2, o CI preserva uma identidade de assinatura de testes em cache privado do GitHub Actions e valida o APK com `apksigner` e `aapt` antes de publicar o artefato. A identidade de assinatura estável foi inicializada na v0.0.2 e deve ser reutilizada nas próximas builds de teste para permitir atualização por cima.
 
 O último estado de build é registrado automaticamente em `ci-status/android-latest.txt`, e os dados de validação ficam em `ci-status/android-apk-validation.txt`.
