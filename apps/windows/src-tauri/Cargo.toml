@@ -1,6 +1,6 @@
 [package]
 name = "lockguard"
-version = "0.7.3"
+version = "0.0.1"
 description = "LockGuard Secure Password Manager"
 authors = ["LockGuard"]
 edition = "2021"
