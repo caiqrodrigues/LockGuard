@@ -1,4 +1,4 @@
-# LockGuard Browser Extension v0.7.03
+# LockGuard Browser Extension v0.0.1
 
 Extensão Manifest V3 para Opera, Chrome e Edge.
 
@@ -8,3 +8,7 @@ Extensão Manifest V3 para Opera, Chrome e Edge.
 4. Abra o LockGuard Web e desbloqueie o cofre.
 
 As credenciais ficam em `chrome.storage.session` somente durante a sessão desbloqueada.
+
+## Versão oficial
+
+**0.0.1** — primeira versão funcional validada com conexão ao LockGuard Web e autofill.
