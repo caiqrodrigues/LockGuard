@@ -11,23 +11,48 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: lockguard-android-main
+  cancel-in-progress: true
+
 jobs:
   android:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
+
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.10.2"
 
-      - name: Normalize Android source imports
+      # Keep one stable debug signing identity for sideload updates.
+      # The private key is stored only in the GitHub Actions cache, never in the repository.
+      - name: Restore stable Android signing key
+        id: signing-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: lockguard-android-debug-signing-v1
+
+      - name: Create signing key when missing
+        if: steps.signing-cache.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          sed -i 's/((ClipboardManager)/((android.content.ClipboardManager)/g' apps/android/app/src/main/java/com/lockguard/app/MainActivity.java
+          mkdir -p "$HOME/.android"
+          keytool -genkeypair -v \
+            -keystore "$HOME/.android/debug.keystore" \
+            -storepass android \
+            -alias androiddebugkey \
+            -keypass android \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=LockGuard Android Debug,O=LockGuard,C=BR"
 
       - name: Build APKs
         id: build
@@ -35,23 +60,40 @@ jobs:
         working-directory: apps/android
         run: |
           set +e
-          gradle assembleDebug assembleRelease --stacktrace 2>&1 | tee ../../android-build.log
+          gradle clean assembleDebug assembleRelease --stacktrace 2>&1 | tee ../../android-build.log
           code=${PIPESTATUS[0]}
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit $code
 
+      - name: Validate installable APK
+        if: steps.build.outcome == 'success'
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="apps/android/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          BUILD_TOOLS="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n 1)"
+          "$BUILD_TOOLS/apksigner" verify --verbose --print-certs "$APK" | tee android-apk-validation.txt
+          "$BUILD_TOOLS/aapt" dump badging "$APK" | tee -a android-apk-validation.txt
+          grep -q "package: name='com.lockguard.app'" android-apk-validation.txt
+          grep -q "versionName='0.0.2'" android-apk-validation.txt
+          echo "APK_SIZE_BYTES=$(stat -c%s "$APK")" | tee -a android-apk-validation.txt
+          echo "APK_SHA256=$(sha256sum "$APK" | awk '{print $1}')" | tee -a android-apk-validation.txt
+
       - name: Collect APKs
         if: steps.build.outcome == 'success'
+        shell: bash
         run: |
           mkdir -p release/android
           cp apps/android/app/build/outputs/apk/debug/app-debug.apk release/android/LockGuard-v0.0.2-debug.apk
           cp apps/android/app/build/outputs/apk/release/app-release-unsigned.apk release/android/LockGuard-v0.0.2-unsigned.apk
+          cp android-apk-validation.txt release/android/VALIDATION.txt
 
       - uses: actions/upload-artifact@v4
         if: steps.build.outcome == 'success'
         with:
           name: LockGuard-Android-v0.0.2
-          path: release/android/*.apk
+          path: release/android/*
           if-no-files-found: error
 
       - name: Persist build status
@@ -74,12 +116,14 @@ jobs:
           if [ -f android-build.log ]; then
             tail -n 160 android-build.log > ci-status/android-build-tail.txt
             grep -Ei "error:|FAILURE:|What went wrong|Execution failed|Android resource linking failed|AAPT|MainActivity.java|Manifest merger failed|Could not resolve" android-build.log | head -n 120 > ci-status/android-build-errors.txt || true
-            head -n 220 android-build.log > ci-status/android-build-head.txt
+          fi
+          if [ -f android-apk-validation.txt ]; then
+            cp android-apk-validation.txt ci-status/android-apk-validation.txt
           fi
           git config user.name "LockGuard CI"
           git config user.email "actions@users.noreply.github.com"
-          git add ci-status/android-latest.txt ci-status/android-build-tail.txt ci-status/android-build-errors.txt ci-status/android-build-head.txt || true
+          git add ci-status || true
           if ! git diff --cached --quiet; then
-            git commit -m "ci(android): record build status [skip ci]"
-            git push
+            git commit -m "ci(android): record validated build [skip ci]"
+            git push || true
           fi
