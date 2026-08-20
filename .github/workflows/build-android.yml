@@ -30,22 +30,19 @@ jobs:
         with:
           gradle-version: "8.10.2"
 
-      # Keep one stable debug signing identity for sideload updates.
-      # The private key is stored only in the GitHub Actions cache, never in the repository.
       - name: Restore stable Android signing key
         id: signing-cache
         uses: actions/cache@v4
         with:
-          path: ~/.android/debug.keystore
-          key: lockguard-android-debug-signing-v1
+          path: apps/android/lockguard-debug.keystore
+          key: lockguard-android-debug-signing-v2
 
       - name: Create signing key when missing
         if: steps.signing-cache.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          mkdir -p "$HOME/.android"
           keytool -genkeypair -v \
-            -keystore "$HOME/.android/debug.keystore" \
+            -keystore apps/android/lockguard-debug.keystore \
             -storepass android \
             -alias androiddebugkey \
             -keypass android \
@@ -77,6 +74,7 @@ jobs:
           "$BUILD_TOOLS/aapt" dump badging "$APK" | tee -a android-apk-validation.txt
           grep -q "package: name='com.lockguard.app'" android-apk-validation.txt
           grep -q "versionName='0.0.2'" android-apk-validation.txt
+          grep -q "CN=LockGuard Android Debug" android-apk-validation.txt
           echo "APK_SIZE_BYTES=$(stat -c%s "$APK")" | tee -a android-apk-validation.txt
           echo "APK_SHA256=$(sha256sum "$APK" | awk '{print $1}')" | tee -a android-apk-validation.txt
 
