@@ -1,0 +1,39 @@
+Verifies
+Verified using v1 scheme (JAR signing): false
+Verified using v2 scheme (APK Signature Scheme v2): true
+Verified using v3 scheme (APK Signature Scheme v3): false
+Verified using v3.1 scheme (APK Signature Scheme v3.1): false
+Verified using v3.2 scheme (APK Signature Scheme v3.2): false
+Verified using v4 scheme (APK Signature Scheme v4): false
+Verified for SourceStamp: false
+Number of signers: 1
+V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug
+V2 Signer: certificate SHA-256 digest: a888c3a5b70e37f420ccc9b81dfcd9691c358189b6f0eeaac49d57368eaa4112
+V2 Signer: certificate SHA-1 digest: bfc1963a7cdd4654e7e79eea035fe3c21494aae4
+V2 Signer: certificate MD5 digest: 01476f6e06de30ed32d812e85f904972
+V2 Signer: key algorithm: RSA
+V2 Signer: key size (bits): 2048
+V2 Signer: public key SHA-256 digest: 5872591fce5bd0b3e82acbfd08063117b50b4c3e0742060ad47f1270cd544158
+V2 Signer: public key SHA-1 digest: ec9496b2ea8351cb7051ae8457b745a54afda101
+V2 Signer: public key MD5 digest: 0426f3e393d6d0da86b904329a4c9de0
+package: name='com.lockguard.app' versionCode='2' versionName='0.0.2' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'
+sdkVersion:'26'
+targetSdkVersion:'35'
+uses-permission: name='android.permission.INTERNET'
+uses-permission: name='android.permission.USE_BIOMETRIC'
+uses-permission: name='android.permission.USE_FINGERPRINT'
+application-label:'LockGuard'
+application-icon-160:'res/drawable/ic_lockguard.xml'
+application: label='LockGuard' icon='res/drawable/ic_lockguard.xml'
+application-debuggable
+launchable-activity: name='com.lockguard.app.MainActivity'  label='' icon=''
+feature-group: label=''
+  uses-feature: name='android.hardware.faketouch'
+  uses-implied-feature: name='android.hardware.faketouch' reason='default feature for all apps'
+main
+supports-screens: 'small' 'normal' 'large' 'xlarge'
+supports-any-density: 'true'
+locales: '--_--'
+densities: '160'
+APK_SIZE_BYTES=16652
+APK_SHA256=2a3cd182976f8363ca60ea43602af944901822b26c7224a09e0048af2101703c
