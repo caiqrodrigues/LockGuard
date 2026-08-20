@@ -8,14 +8,14 @@ Verified using v4 scheme (APK Signature Scheme v4): false
 Verified for SourceStamp: false
 Number of signers: 1
 V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug
-V2 Signer: certificate SHA-256 digest: a888c3a5b70e37f420ccc9b81dfcd9691c358189b6f0eeaac49d57368eaa4112
-V2 Signer: certificate SHA-1 digest: bfc1963a7cdd4654e7e79eea035fe3c21494aae4
-V2 Signer: certificate MD5 digest: 01476f6e06de30ed32d812e85f904972
+V2 Signer: certificate SHA-256 digest: f0845b0300b4e99be6052e65762c34917a23c03d39ac76d5b0e62759840a1fe4
+V2 Signer: certificate SHA-1 digest: 87ed1a88bb3256c0d4e7a380c0b9ac267a3bd252
+V2 Signer: certificate MD5 digest: eb123a4b1a26ae03f4cec7a3001c3c67
 V2 Signer: key algorithm: RSA
 V2 Signer: key size (bits): 2048
-V2 Signer: public key SHA-256 digest: 5872591fce5bd0b3e82acbfd08063117b50b4c3e0742060ad47f1270cd544158
-V2 Signer: public key SHA-1 digest: ec9496b2ea8351cb7051ae8457b745a54afda101
-V2 Signer: public key MD5 digest: 0426f3e393d6d0da86b904329a4c9de0
+V2 Signer: public key SHA-256 digest: 336cd6be0592aae3d7ba19f117be2b86c38279d3dbce64570276a52c8fccfa9f
+V2 Signer: public key SHA-1 digest: 09f39381b0f8398039d683b6b9078a3a9dcf8d2f
+V2 Signer: public key MD5 digest: 09096947515a9b34049c6f000c3462b7
 package: name='com.lockguard.app' versionCode='2' versionName='0.0.2' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'
 sdkVersion:'26'
 targetSdkVersion:'35'
@@ -36,4 +36,4 @@ supports-any-density: 'true'
 locales: '--_--'
 densities: '160'
 APK_SIZE_BYTES=16652
-APK_SHA256=2a3cd182976f8363ca60ea43602af944901822b26c7224a09e0048af2101703c
+APK_SHA256=d47e5c02a07d78c0de49363065cdc6a164b8752e4abcb7d11227c152735b7db7
