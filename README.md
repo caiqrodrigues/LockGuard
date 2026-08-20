@@ -2,8 +2,9 @@
 
 Gerenciador de senhas Black/Gold multiplataforma com Web, extensão de navegador, Windows e Android.
 
-## Versão atual
-**0.7.03**
+## Versões atuais
+- Web / Extensão / Windows: **0.7.03**
+- Android: **0.0.2**
 
 ## Plataformas
 - `apps/web` — site publicado no Vercel.
@@ -22,5 +23,8 @@ O projeto utiliza criptografia client-side, AES-GCM 256, Argon2id para derivaç�
 ## Produção Web
 https://lockguardapp.vercel.app
 
+## Android
+A linha Android possui versionamento próprio. A versão `0.0.1` foi o primeiro APK funcional validado em aparelho real. A `0.0.2` introduz login obrigatório na abertura, novo ícone com cadeado e redesign Black/Gold mais próximo do produto Web.
+
 ## Status
-Web e extensão já foram validados em uso. Windows e Android possuem pipelines de compilação separados e só devem ser tratados como release estável após os respectivos builds e testes passarem.
+Web e extensão já foram validados em uso. Windows já possui build automatizado funcional. Android é validado por build no GitHub Actions e teste em aparelho real antes de ser tratado como release estável.
