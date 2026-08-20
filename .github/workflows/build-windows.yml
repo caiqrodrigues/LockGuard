@@ -10,6 +10,10 @@ on:
       - "scripts/prepare-windows.mjs"
       - ".github/workflows/build-windows.yml"
 
+concurrency:
+  group: lockguard-windows-main
+  cancel-in-progress: true
+
 permissions:
   contents: write
 
@@ -85,7 +89,8 @@ jobs:
           git config user.name "LockGuard CI"
           git config user.email "actions@users.noreply.github.com"
           git add ci-status/windows-latest.txt ci-status/windows-build-tail.txt
-          if (-not (git diff --cached --quiet)) {
-            git commit -m "ci(windows): record build status [skip ci]"
-            git push
+          git commit -m "ci(windows): record build status [skip ci]" 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            git pull --rebase origin main
+            git push origin HEAD:main
           }
