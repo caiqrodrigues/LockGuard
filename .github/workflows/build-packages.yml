@@ -24,11 +24,12 @@ jobs:
       - name: Validate source
         run: |
           node --check apps/web/app.js
+          node --check apps/web/account.js
           node --check apps/browser-extension/service-worker.js
           node --check apps/browser-extension/content.js
           node --check apps/browser-extension/popup.js
-          node -e "const m=require('./apps/browser-extension/manifest.json'); if(m.version!=='0.0.1') process.exit(1)"
-          node -e "const p=require('./apps/web/package.json'); if(p.version!=='0.7.3') process.exit(1)"
+          node -e "const m=require('./apps/browser-extension/manifest.json'); if(m.version!=='0.0.2') process.exit(1)"
+          node -e "const p=require('./apps/web/package.json'); if(p.version!=='0.7.4') process.exit(1)"
 
       - name: Package Web and Extension
         run: |
@@ -37,18 +38,18 @@ jobs:
           rm -rf release/web/node_modules release/web/dist
           cp -R apps/browser-extension/. release/extension/
           cd release
-          zip -qr LockGuard-Web-v0.7.3.zip web
-          zip -qr LockGuard-Extension-v0.0.1.zip extension
+          zip -qr LockGuard-Web-v0.7.4.zip web
+          zip -qr LockGuard-Extension-v0.0.2.zip extension
 
       - uses: actions/upload-artifact@v4
         with:
-          name: LockGuard-Web-v0.7.3
-          path: release/LockGuard-Web-v0.7.3.zip
+          name: LockGuard-Web-v0.7.4
+          path: release/LockGuard-Web-v0.7.4.zip
 
       - uses: actions/upload-artifact@v4
         with:
-          name: LockGuard-Extension-v0.0.1
-          path: release/LockGuard-Extension-v0.0.1.zip
+          name: LockGuard-Extension-v0.0.2
+          path: release/LockGuard-Extension-v0.0.2.zip
 
       - name: Persist package status
         if: always()
@@ -56,8 +57,8 @@ jobs:
           mkdir -p ci-status
           {
             echo "workflow=Build Web and Extension Packages"
-            echo "web_version=0.7.3"
-            echo "extension_version=0.0.1"
+            echo "web_version=0.7.4"
+            echo "extension_version=0.0.2"
             echo "commit=${GITHUB_SHA}"
             echo "outcome=${{ job.status }}"
             echo "run_id=${GITHUB_RUN_ID}"
