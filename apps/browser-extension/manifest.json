@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "LockGuard",
+  "version": "0.7.3",
+  "description": "Autofill seguro para credenciais desbloqueadas no LockGuard.",
+  "permissions": ["storage", "tabs"],
+  "host_permissions": ["http://*/*", "https://*/*"],
+  "background": {"service_worker": "service-worker.js"},
+  "action": {"default_popup": "popup.html", "default_title": "LockGuard"},
+  "content_scripts": [{"matches": ["http://*/*", "https://*/*"], "js": ["content.js"], "css": ["content.css"], "run_at": "document_idle"}]
+}

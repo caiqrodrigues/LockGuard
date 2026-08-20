@@ -1,0 +1,52 @@
+name: Build Windows
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "apps/web/**"
+      - "apps/windows/**"
+      - "scripts/prepare-windows.mjs"
+      - ".github/workflows/build-windows.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: apps/windows/src-tauri
+      - name: Install Tauri CLI
+        working-directory: apps/windows
+        run: npm install
+      - name: Prepare frontend
+        run: node scripts/prepare-windows.mjs
+      - name: Build
+        working-directory: apps/windows
+        run: npx tauri build --bundles nsis
+      - name: Collect executables
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+          $portable = Get-ChildItem "apps/windows/src-tauri/target/release" -Filter "lockguard.exe" -File | Select-Object -First 1
+          if (-not $portable) { throw "Portable executable not found" }
+          Copy-Item $portable.FullName "release/LockGuard-Portable.exe"
+          $setup = Get-ChildItem "apps/windows/src-tauri/target/release/bundle/nsis" -Filter "*.exe" -File | Select-Object -First 1
+          if (-not $setup) { throw "NSIS installer not found" }
+          Copy-Item $setup.FullName "release/LockGuard-Setup.exe"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LockGuard-Windows-v0.7.03
+          path: |
+            release/LockGuard-Portable.exe
+            release/LockGuard-Setup.exe
+          if-no-files-found: error

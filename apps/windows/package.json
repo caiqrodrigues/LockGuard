@@ -1,0 +1,12 @@
+{
+  "name": "lockguard-windows",
+  "private": true,
+  "version": "0.7.03",
+  "scripts": {
+    "tauri": "tauri",
+    "tauri:build": "tauri build --bundles nsis"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.0.0"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "lockguard",
+  "private": true,
+  "version": "0.7.03",
+  "scripts": {
+    "prepare:windows": "node scripts/prepare-windows.mjs",
+    "tauri:build": "npm run prepare:windows && npm --prefix apps/windows run tauri:build"
+  }
+}
