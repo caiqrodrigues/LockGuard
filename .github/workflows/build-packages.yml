@@ -37,7 +37,8 @@ jobs:
 
       - name: Validate built Web version
         run: |
-          node -e "const fs=require('fs');const s=fs.readFileSync('apps/web/dist/app.js','utf8');if(!s.includes('0.7.4')||!s.includes('LockGuardAccount'))process.exit(1)"
+          node -e "const fs=require('fs');const s=fs.readFileSync('apps/web/dist/app.js','utf8');if(!s.includes(\"const APP_VERSION='0.7.4';\")||!s.includes(\"const WEB_VERSION = '0.7.4';\")||!s.includes('LockGuardAccount'))process.exit(1)"
+          node -e "const fs=require('fs');const s=fs.readFileSync('apps/web/dist/index.html','utf8');if(!s.includes('Versão 0.7.4'))process.exit(1)"
           node --check apps/web/dist/app.js
 
       - name: Package Web and Extension
