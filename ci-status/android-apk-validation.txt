@@ -16,7 +16,7 @@ V2 Signer: key size (bits): 2048
 V2 Signer: public key SHA-256 digest: 6dc487c09d634629c3e1c1ab1498e9ec29c8ab10fb750f76c543888e44d9e910
 V2 Signer: public key SHA-1 digest: 68ee6ca720c68d85668fbd8093b2daeb0b92dcaa
 V2 Signer: public key MD5 digest: 275627f42af8e5a7acac18eed23db244
-package: name='com.lockguard.app' versionCode='3' versionName='0.0.3' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'
+package: name='com.lockguard.app' versionCode='4' versionName='0.0.4' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'
 sdkVersion:'26'
 targetSdkVersion:'35'
 uses-permission: name='android.permission.INTERNET'
@@ -35,5 +35,3 @@ supports-screens: 'small' 'normal' 'large' 'xlarge'
 supports-any-density: 'true'
 locales: '--_--'
 densities: '160'
-APK_SIZE_BYTES=19568
-APK_SHA256=4727ea6c68cb07e8a34a640245e74326c5d1ce5d1856e6d5d355a0e1912203be
