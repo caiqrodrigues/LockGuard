@@ -1,87 +1,273 @@
 package com.lockguard.app;
 
-import android.app.*;
-import android.os.*;
-import android.content.*;
-import android.graphics.*;
-import android.graphics.drawable.GradientDrawable;
-import android.text.*;
-import android.view.*;
-import android.widget.*;
-import java.io.*;
-import java.net.*;
-import java.nio.charset.StandardCharsets;
-import java.security.*;
-import java.util.*;
-import javax.crypto.*;
-import javax.crypto.spec.*;
-import org.bouncycastle.crypto.generators.Argon2BytesGenerator;
-import org.bouncycastle.crypto.params.Argon2Parameters;
-import org.json.*;
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.KeyguardManager;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.hardware.fingerprint.FingerprintManager;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.CancellationSignal;
+import android.view.Gravity;
+import android.view.View;
+import android.webkit.CookieManager;
+import android.webkit.WebChromeClient;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.Toast;
 
 public class MainActivity extends Activity {
-    static final String SB="https://xyjxznihdnqqcsbtfulh.supabase.co";
-    static final String KEY="sb_publishable_ceho4hLIMAczMa46dXDrRA_p_H_Pm7A";
-    static final String APP_VERSION="0.0.2";
-    static final int GOLD=Color.rgb(212,175,55), GOLD2=Color.rgb(241,216,121), BG=Color.rgb(5,5,5), PANEL=Color.rgb(15,15,15), PANEL2=Color.rgb(22,22,22), BORDER=Color.rgb(55,48,27), MUTED=Color.rgb(154,149,137), GREEN=Color.rgb(103,205,128);
-    LinearLayout root,content,tabs; TextView version; String token,userId,email; SecretKey vaultKey; JSONObject cloudMeta; JSONArray items=new JSONArray(); JSONObject security=new JSONObject(); SecureRandom rng=new SecureRandom();
+    private static final String VERSION = "0.0.2";
+    private static final String URL = "https://lockguardapp.vercel.app";
+    private static final String PREFS = "lockguard_android";
+    private static final String PREF_BIOMETRIC = "biometric_enabled";
+    private static final int GOLD = Color.rgb(212,175,55);
+    private static final int GOLD2 = Color.rgb(241,216,121);
+    private static final int BG = Color.rgb(5,5,5);
+    private static final int PANEL = Color.rgb(15,15,15);
 
-    @Override public void onCreate(Bundle b){super.onCreate(b);getWindow().setStatusBarColor(BG);getWindow().setNavigationBarColor(BG);showLoginGate();}
-    @Override protected void onStop(){super.onStop();lockVault(false);}
+    private SharedPreferences prefs;
+    private WebView web;
+    private LinearLayout root;
+    private CancellationSignal fingerprintCancellation;
+    private boolean webLoaded = false;
 
-    int dp(int x){return (int)(x*getResources().getDisplayMetrics().density+.5f);}
-    GradientDrawable bg(int color,int radius){GradientDrawable g=new GradientDrawable();g.setColor(color);g.setCornerRadius(dp(radius));return g;}
-    GradientDrawable outline(int color,int radius,int stroke){GradientDrawable g=bg(color,radius);g.setStroke(dp(1),stroke);return g;}
-    TextView tv(String s,int sp,int color){TextView v=new TextView(this);v.setText(s);v.setTextSize(sp);v.setTextColor(color);v.setPadding(dp(4),dp(5),dp(4),dp(5));return v;}
-    TextView label(String s){TextView v=tv(s,11,GOLD2);v.setLetterSpacing(.12f);v.setTypeface(Typeface.DEFAULT_BOLD);return v;}
-    EditText input(String hint){EditText e=new EditText(this);e.setHint(hint);e.setHintTextColor(Color.rgb(90,90,90));e.setTextColor(Color.WHITE);e.setSingleLine(true);e.setTextSize(15);e.setPadding(dp(16),dp(13),dp(16),dp(13));e.setBackground(outline(PANEL2,12,BORDER));return e;}
-    Button btn(String s,boolean primary){Button b=new Button(this);b.setText(s);b.setTextSize(12);b.setTypeface(Typeface.DEFAULT_BOLD);b.setAllCaps(false);b.setPadding(dp(12),dp(12),dp(12),dp(12));b.setTextColor(primary?Color.BLACK:GOLD2);b.setBackground(primary?bg(GOLD,12):outline(PANEL,12,BORDER));return b;}
-    LinearLayout card(){LinearLayout c=new LinearLayout(this);c.setOrientation(LinearLayout.VERTICAL);c.setPadding(dp(16),dp(15),dp(16),dp(15));c.setBackground(outline(PANEL,16,BORDER));return c;}
-    void add(View v){content.addView(v,new LinearLayout.LayoutParams(-1,-2));}
-    void gap(int h){Space s=new Space(this);content.addView(s,new LinearLayout.LayoutParams(1,dp(h)));}
-    void toast(String s){Toast.makeText(this,s,Toast.LENGTH_SHORT).show();}
-    void async(Runnable work,Runnable done){new Thread(()->{try{work.run();runOnUiThread(done);}catch(Exception e){runOnUiThread(()->toast(e.getMessage()==null?"Erro":e.getMessage()));}}).start();}
-
-    void showLoginGate(){
-        ScrollView sc=new ScrollView(this);sc.setFillViewport(true);sc.setBackgroundColor(BG);LinearLayout wrap=new LinearLayout(this);wrap.setOrientation(LinearLayout.VERTICAL);wrap.setGravity(Gravity.CENTER_HORIZONTAL);wrap.setPadding(dp(24),dp(52),dp(24),dp(28));sc.addView(wrap);setContentView(sc);
-        TextView icon=tv("▣",42,GOLD);icon.setGravity(Gravity.CENTER);icon.setBackground(outline(Color.rgb(12,12,12),18,BORDER));LinearLayout.LayoutParams ip=new LinearLayout.LayoutParams(dp(72),dp(72));wrap.addView(icon,ip);
-        TextView brand=tv("LOCKGUARD",28,GOLD2);brand.setTypeface(Typeface.DEFAULT_BOLD);brand.setLetterSpacing(.12f);brand.setGravity(Gravity.CENTER);wrap.addView(brand);
-        TextView sub=tv("SEU COFRE. SUAS CHAVES. SEUS DADOS.",10,MUTED);sub.setLetterSpacing(.1f);sub.setGravity(Gravity.CENTER);wrap.addView(sub);
-        Space top=new Space(this);wrap.addView(top,new LinearLayout.LayoutParams(1,dp(30)));
-        LinearLayout login=card();login.addView(label("ACESSO SEGURO"));TextView h=tv("Entre no LockGuard",24,Color.WHITE);h.setTypeface(Typeface.DEFAULT_BOLD);login.addView(h);login.addView(tv("Use a mesma conta do LockGuard Web. O cofre continua cifrado e só é aberto com sua senha mestra.",13,MUTED));
-        EditText em=input("E-mail");EditText pw=input("Senha da conta");pw.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD);LinearLayout.LayoutParams f=new LinearLayout.LayoutParams(-1,-2);f.topMargin=dp(12);login.addView(em,f);LinearLayout.LayoutParams f2=new LinearLayout.LayoutParams(-1,-2);f2.topMargin=dp(10);login.addView(pw,f2);
-        Button enter=btn("ENTRAR COM SEGURANÇA",true);LinearLayout.LayoutParams bp=new LinearLayout.LayoutParams(-1,dp(52));bp.topMargin=dp(16);login.addView(enter,bp);wrap.addView(login,new LinearLayout.LayoutParams(-1,-2));
-        TextView info=tv("AES-GCM 256  •  ARGON2ID  •  ZERO-KNOWLEDGE",10,MUTED);info.setGravity(Gravity.CENTER);info.setPadding(0,dp(20),0,dp(8));wrap.addView(info);TextView v=tv("Android • Versão "+APP_VERSION,10,Color.rgb(85,82,74));v.setGravity(Gravity.CENTER);wrap.addView(v);
-        enter.setOnClickListener(x->{if(em.getText().toString().trim().isEmpty()||pw.getText().length()==0){toast("Informe e-mail e senha");return;}enter.setEnabled(false);enter.setText("AUTENTICANDO...");async(()->{try{JSONObject body=new JSONObject().put("email",em.getText().toString().trim()).put("password",pw.getText().toString());JSONObject r=request("POST",SB+"/auth/v1/token?grant_type=password",body,null);token=r.getString("access_token");JSONObject u=r.getJSONObject("user");userId=u.getString("id");email=u.optString("email");}catch(Exception ex){throw new RuntimeException("Login inválido ou indisponível");}},()->{toast("Conta conectada");showShell();showGenerator();});});
+    @Override
+    protected void onCreate(Bundle state) {
+        super.onCreate(state);
+        getWindow().setStatusBarColor(BG);
+        getWindow().setNavigationBarColor(BG);
+        prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
+        if (prefs.getBoolean(PREF_BIOMETRIC, false)) {
+            showBiometricGate();
+        } else {
+            showApp();
+        }
     }
 
-    void showShell(){root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setBackgroundColor(BG);setContentView(root);
-        LinearLayout head=new LinearLayout(this);head.setGravity(Gravity.CENTER_VERTICAL);head.setPadding(dp(18),dp(12),dp(14),dp(10));head.setBackgroundColor(Color.rgb(8,8,8));TextView lock=tv("▣",24,GOLD);head.addView(lock);TextView brand=tv("LOCKGUARD",20,GOLD2);brand.setTypeface(Typeface.DEFAULT_BOLD);brand.setLetterSpacing(.12f);head.addView(brand,new LinearLayout.LayoutParams(0,-2,1));version=tv("v"+APP_VERSION,10,MUTED);head.addView(version);root.addView(head);
-        tabs=new LinearLayout(this);tabs.setPadding(dp(10),dp(7),dp(10),dp(7));tabs.setBackgroundColor(Color.rgb(12,12,12));String[] ns={"GERADOR","TESTE","COFRE","SECURITY"};for(String n:ns){Button b=btn(n,false);b.setTextSize(9);LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(42),1);p.setMargins(dp(3),0,dp(3),0);tabs.addView(b,p);if(n.equals("GERADOR"))b.setOnClickListener(v->showGenerator());if(n.equals("TESTE"))b.setOnClickListener(v->showTester());if(n.equals("COFRE"))b.setOnClickListener(v->showVault());if(n.equals("SECURITY"))b.setOnClickListener(v->showDashboard());}root.addView(tabs);
-        ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);content=new LinearLayout(this);content.setOrientation(LinearLayout.VERTICAL);content.setPadding(dp(18),dp(18),dp(18),dp(30));scroll.addView(content);root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));}
-    void clear(String eyebrow,String h,String sub){content.removeAllViews();add(label(eyebrow));TextView t=tv(h,27,Color.WHITE);t.setTypeface(Typeface.DEFAULT_BOLD);add(t);add(tv(sub,13,MUTED));gap(14);}
+    private int dp(int value) {
+        return (int) (value * getResources().getDisplayMetrics().density + .5f);
+    }
 
-    void showGenerator(){clear("PASSWORD LAB","Gerador de senhas","Crie senhas fortes localmente. Nada da geração é enviado ao servidor.");LinearLayout box=card();EditText ctx=input("Senha para quê? Ex.: Gmail");box.addView(ctx);CheckBox upper=check("Letras maiúsculas",true),lower=check("Letras minúsculas",true),nums=check("Números",true),syms=check("Símbolos",true);LinearLayout opts=new LinearLayout(this);opts.setOrientation(LinearLayout.VERTICAL);opts.setPadding(0,dp(8),0,0);opts.addView(upper);opts.addView(lower);opts.addView(nums);opts.addView(syms);box.addView(opts);TextView len=tv("20 caracteres",13,GOLD2);box.addView(len);SeekBar seek=new SeekBar(this);seek.setMax(58);seek.setProgress(14);box.addView(seek);EditText out=input("");out.setFocusable(false);out.setTextSize(17);box.addView(out);TextView score=tv("",12,MUTED);box.addView(score);Button gen=btn("GERAR NOVA SENHA",true),copy=btn("COPIAR SENHA",false);LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,dp(50));p.topMargin=dp(10);box.addView(gen,p);LinearLayout.LayoutParams p2=new LinearLayout.LayoutParams(-1,dp(48));p2.topMargin=dp(8);box.addView(copy,p2);add(box);
-        Runnable g=()->{int l=seek.getProgress()+6;StringBuilder pool=new StringBuilder();if(upper.isChecked())pool.append("ABCDEFGHIJKLMNOPQRSTUVWXYZ");if(lower.isChecked())pool.append("abcdefghijklmnopqrstuvwxyz");if(nums.isChecked())pool.append("0123456789");if(syms.isChecked())pool.append("!@#$%^&*()-_=+[]{};:,.?");if(pool.length()==0){toast("Ative ao menos um tipo");return;}StringBuilder s=new StringBuilder();for(int i=0;i<l;i++)s.append(pool.charAt(rng.nextInt(pool.length())));out.setText(s);int sc=strength(s.toString(),ctx.getText().toString());score.setText("Força  "+sc+"/100  •  "+labelStrength(sc));};gen.setOnClickListener(v->g.run());seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){public void onProgressChanged(SeekBar s,int x,boolean f){len.setText((x+6)+" caracteres");}public void onStartTrackingTouch(SeekBar s){}public void onStopTrackingTouch(SeekBar s){g.run();}});copy.setOnClickListener(v->{((ClipboardManager)getSystemService(CLIPBOARD_SERVICE)).setPrimaryClip(ClipData.newPlainText("LockGuard",out.getText()));toast("Senha copiada");});g.run();}
-    CheckBox check(String s,boolean on){CheckBox c=new CheckBox(this);c.setText(s);c.setTextColor(Color.WHITE);c.setChecked(on);return c;}
+    private TextView text(String value, int sp, int color) {
+        TextView t = new TextView(this);
+        t.setText(value);
+        t.setTextSize(sp);
+        t.setTextColor(color);
+        return t;
+    }
 
-    void showTester(){clear("PASSWORD INTELLIGENCE","Teste de força","Analise uma senha localmente antes de utilizá-la.");LinearLayout c=card();EditText p=input("Digite uma senha");p.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD);c.addView(p);TextView result=tv("Aguardando análise",22,GOLD2);result.setTypeface(Typeface.DEFAULT_BOLD);c.addView(result);TextView detail=tv("",13,MUTED);c.addView(detail);add(c);p.addTextChangedListener(new TextWatcher(){public void beforeTextChanged(CharSequence s,int a,int b,int c){}public void onTextChanged(CharSequence s,int a,int b,int c){int sc=strength(s.toString(),"");result.setText(sc+"/100 • "+labelStrength(sc));detail.setText(feedback(s.toString()));}public void afterTextChanged(Editable e){}});}
-    int strength(String p,String context){if(p.length()==0)return 0;int s=Math.min(100,p.length()*5);if(p.length()<10)s-=25;if(!p.matches(".*[A-Z].*"))s-=8;if(!p.matches(".*[a-z].*"))s-=8;if(!p.matches(".*\\d.*"))s-=8;if(!p.matches(".*[^A-Za-z0-9].*"))s-=8;String n=p.toLowerCase(Locale.ROOT);for(String x:new String[]{"password","senha","admin","qwerty","123456","letmein"})if(n.contains(x)){s-=25;break;}if(context!=null&&context.length()>2&&n.contains(context.toLowerCase(Locale.ROOT)))s-=15;return Math.max(0,Math.min(100,s));}
-    String labelStrength(int s){return s<25?"MUITO FRACA":s<45?"FRACA":s<65?"MÉDIA":s<85?"FORTE":"MUITO FORTE";}
-    String feedback(String p){List<String>a=new ArrayList<>();if(p.length()<14)a.add("• Use 14 caracteres ou mais");if(!p.matches(".*[A-Z].*"))a.add("• Adicione letras maiúsculas");if(!p.matches(".*\\d.*"))a.add("• Adicione números");if(!p.matches(".*[^A-Za-z0-9].*"))a.add("• Adicione símbolos");if(a.isEmpty())a.add("• Boa composição e variedade");return TextUtils.join("\n",a);}
+    private Button button(String label) {
+        Button b = new Button(this);
+        b.setText(label);
+        b.setAllCaps(false);
+        b.setTextColor(Color.BLACK);
+        b.setBackgroundColor(GOLD);
+        return b;
+    }
 
-    void showVault(){clear("ENCRYPTED VAULT","Cofre seguro","Seu conteúdo é descriptografado somente neste aparelho após a senha mestra.");if(vaultKey==null){showUnlock();return;}renderItems();}
-    void showUnlock(){LinearLayout c=card();c.addView(label("CONTA CONECTADA"));c.addView(tv(email==null?"LockGuard":email,14,Color.WHITE));EditText m=input("Senha mestra");m.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD);LinearLayout.LayoutParams mp=new LinearLayout.LayoutParams(-1,-2);mp.topMargin=dp(12);c.addView(m,mp);Button unlock=btn("DESBLOQUEAR COFRE",true);LinearLayout.LayoutParams up=new LinearLayout.LayoutParams(-1,dp(50));up.topMargin=dp(12);c.addView(unlock,up);Button logout=btn("SAIR DA CONTA",false);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,dp(46));lp.topMargin=dp(8);c.addView(logout,lp);add(c);unlock.setOnClickListener(v->{if(m.getText().length()==0){toast("Informe a senha mestra");return;}unlock.setEnabled(false);unlock.setText("DESCRIPTOGRAFANDO...");async(()->{try{loadAndDecrypt(m.getText().toString());}catch(Exception e){throw new RuntimeException("Senha mestra inválida ou cofre indisponível");}},()->{m.setText("");toast("Cofre desbloqueado");showVault();});});logout.setOnClickListener(v->{token=null;userId=null;email=null;lockVault(false);showLoginGate();});}
-    void renderItems(){LinearLayout top=card();top.addView(label("SINCRONIZADO"));TextView n=tv(items.length()+" itens protegidos",21,Color.WHITE);n.setTypeface(Typeface.DEFAULT_BOLD);top.addView(n);LinearLayout row=new LinearLayout(this);Button sync=btn("SINCRONIZAR",false),lock=btn("BLOQUEAR",false);row.addView(sync,new LinearLayout.LayoutParams(0,dp(44),1));row.addView(lock,new LinearLayout.LayoutParams(0,dp(44),1));top.addView(row);add(top);gap(10);sync.setOnClickListener(v->async(()->{try{loadAndDecrypt(null);}catch(Exception e){throw new RuntimeException("Falha ao sincronizar");}},()->{toast("Sincronizado");showVault();}));lock.setOnClickListener(v->{lockVault(true);showVault();});for(int i=0;i<items.length();i++){JSONObject x=items.optJSONObject(i);if(x==null)continue;LinearLayout c=card();TextView name=tv(x.optString("name","Sem nome"),17,Color.WHITE);name.setTypeface(Typeface.DEFAULT_BOLD);c.addView(name);c.addView(tv(x.optString("type","login").toUpperCase(Locale.ROOT),10,GOLD2));if("login".equals(x.optString("type","login")))c.addView(tv(x.optString("user","sem usuário"),12,MUTED));add(c);gap(8);}}
+    private void showBiometricGate() {
+        LinearLayout gate = new LinearLayout(this);
+        gate.setOrientation(LinearLayout.VERTICAL);
+        gate.setGravity(Gravity.CENTER);
+        gate.setPadding(dp(28), dp(30), dp(28), dp(30));
+        gate.setBackgroundColor(BG);
 
-    void showDashboard(){clear("SECURITY CENTER","Painel de segurança","Analise a saúde das credenciais descriptografadas no aparelho.");if(vaultKey==null){LinearLayout c=card();c.addView(tv("Cofre bloqueado",20,Color.WHITE));c.addView(tv("Desbloqueie o cofre para calcular sua pontuação de segurança.",13,MUTED));Button b=btn("ABRIR COFRE",true);c.addView(b,new LinearLayout.LayoutParams(-1,dp(50)));add(c);b.setOnClickListener(v->showVault());return;}int total=0,strong=0,weak=0,reused=0,exposed=0;Map<String,Integer> map=new HashMap<>();for(int i=0;i<items.length();i++){JSONObject x=items.optJSONObject(i);if(x==null||!"login".equals(x.optString("type","login")))continue;String p=x.optString("password","");if(p.isEmpty())continue;total++;if(strength(p,x.optString("name"))>=65)strong++;else weak++;map.put(p,map.getOrDefault(p,0)+1);if(x.optJSONObject("security")!=null&&x.optJSONObject("security").optInt("exposedCount",0)>0)exposed++;}for(Integer c:map.values())if(c>1)reused+=c;int sc=Math.max(0,100-exposed*22-(total==0?0:weak*25/total)-(total==0?0:reused*20/total));LinearLayout score=card();score.addView(label("SEGURANÇA GERAL"));TextView big=tv(sc+"/100",42,GOLD2);big.setTypeface(Typeface.DEFAULT_BOLD);score.addView(big);score.addView(tv(sc>=85?"Excelente":sc>=65?"Boa":"Precisa de atenção",14,sc>=85?GREEN:GOLD));add(score);gap(10);LinearLayout stats=card();stats.addView(tv("Fortes: "+strong+"   •   Fracas: "+weak,14,Color.WHITE));stats.addView(tv("Reutilizadas: "+reused+"   •   Vazadas: "+exposed,14,Color.WHITE));add(stats);}
+        TextView lock = text("🔒", 52, GOLD);
+        lock.setGravity(Gravity.CENTER);
+        gate.addView(lock, new LinearLayout.LayoutParams(-1, -2));
 
-    void loadAndDecrypt(String master) throws Exception {JSONArray a=requestArray("GET",SB+"/rest/v1/user_vaults?select=*&user_id=eq."+URLEncoder.encode(userId,"UTF-8"),null,token);if(a.length()==0)throw new Exception("Cofre não encontrado");cloudMeta=a.getJSONObject(0);if(vaultKey==null){if(master==null)throw new Exception("Senha mestra necessária");byte[] salt=Base64.getDecoder().decode(cloudMeta.getString("vault_salt"));String alg=cloudMeta.optString("kdf_algorithm","pbkdf2-sha256");vaultKey="argon2id".equals(alg)?argon(master,salt,cloudMeta.optInt("kdf_memory_kib",65536),cloudMeta.optInt("kdf_time_cost",3),cloudMeta.optInt("kdf_parallelism",1)):pbkdf2(master,salt,cloudMeta.optInt("kdf_iterations",310000));}byte[] iv=Base64.getDecoder().decode(cloudMeta.getString("vault_iv"));byte[] data=Base64.getDecoder().decode(cloudMeta.getString("vault_ciphertext"));Cipher c=Cipher.getInstance("AES/GCM/NoPadding");c.init(Cipher.DECRYPT_MODE,vaultKey,new GCMParameterSpec(128,iv));JSONObject p=new JSONObject(new String(c.doFinal(data),StandardCharsets.UTF_8));items=p.optJSONArray("items");if(items==null)items=new JSONArray();security=p.optJSONObject("security");if(security==null)security=new JSONObject();}
-    SecretKey argon(String master,byte[] salt,int memory,int time,int parallel)throws Exception{Argon2Parameters p=new Argon2Parameters.Builder(Argon2Parameters.ARGON2_id).withSalt(salt).withMemoryAsKB(memory).withIterations(time).withParallelism(parallel).build();Argon2BytesGenerator g=new Argon2BytesGenerator();g.init(p);byte[] out=new byte[32];g.generateBytes(master.toCharArray(),out);return new SecretKeySpec(out,"AES");}
-    SecretKey pbkdf2(String master,byte[] salt,int it)throws Exception{PBEKeySpec s=new PBEKeySpec(master.toCharArray(),salt,it,256);return new SecretKeySpec(SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(s).getEncoded(),"AES");}
-    void lockVault(boolean msg){vaultKey=null;items=new JSONArray();security=new JSONObject();cloudMeta=null;if(msg)toast("Cofre bloqueado");}
+        TextView brand = text("LOCKGUARD", 27, GOLD2);
+        brand.setGravity(Gravity.CENTER);
+        brand.setLetterSpacing(.12f);
+        brand.setPadding(0, dp(10), 0, dp(6));
+        gate.addView(brand, new LinearLayout.LayoutParams(-1, -2));
 
-    JSONObject request(String method,String url,JSONObject body,String bearer)throws Exception{return new JSONObject(requestRaw(method,url,body==null?null:body.toString(),bearer));}
-    JSONArray requestArray(String method,String url,JSONObject body,String bearer)throws Exception{return new JSONArray(requestRaw(method,url,body==null?null:body.toString(),bearer));}
-    String requestRaw(String method,String u,String body,String bearer)throws Exception{HttpURLConnection c=(HttpURLConnection)new URL(u).openConnection();c.setRequestMethod(method);c.setConnectTimeout(12000);c.setReadTimeout(20000);c.setRequestProperty("apikey",KEY);c.setRequestProperty("Content-Type","application/json");if(bearer!=null)c.setRequestProperty("Authorization","Bearer "+bearer);if(body!=null){c.setDoOutput(true);try(OutputStream o=c.getOutputStream()){o.write(body.getBytes(StandardCharsets.UTF_8));}}int code=c.getResponseCode();InputStream in=code>=200&&code<300?c.getInputStream():c.getErrorStream();StringBuilder b=new StringBuilder();if(in!=null)try(BufferedReader r=new BufferedReader(new InputStreamReader(in,StandardCharsets.UTF_8))){String line;while((line=r.readLine())!=null)b.append(line);}if(code<200||code>=300)throw new Exception("HTTP "+code);return b.toString();}
+        TextView subtitle = text("DESBLOQUEIO BIOMÉTRICO", 12, Color.LTGRAY);
+        subtitle.setGravity(Gravity.CENTER);
+        gate.addView(subtitle, new LinearLayout.LayoutParams(-1, -2));
+
+        Button biometric = button("USAR IMPRESSÃO DIGITAL");
+        LinearLayout.LayoutParams bp = new LinearLayout.LayoutParams(-1, dp(52));
+        bp.topMargin = dp(28);
+        gate.addView(biometric, bp);
+
+        Button password = button("ENTRAR COM LOGIN E SENHA");
+        password.setTextColor(GOLD2);
+        password.setBackgroundColor(PANEL);
+        LinearLayout.LayoutParams pp = new LinearLayout.LayoutParams(-1, dp(52));
+        pp.topMargin = dp(10);
+        gate.addView(password, pp);
+
+        TextView version = text("Android • Versão " + VERSION, 10, Color.DKGRAY);
+        version.setGravity(Gravity.CENTER);
+        version.setPadding(0, dp(26), 0, 0);
+        gate.addView(version, new LinearLayout.LayoutParams(-1, -2));
+
+        biometric.setOnClickListener(v -> promptBiometric(() -> showApp(), false));
+        password.setOnClickListener(v -> showApp());
+        setContentView(gate);
+
+        gate.postDelayed(() -> promptBiometric(() -> showApp(), false), 250);
+    }
+
+    private void showApp() {
+        root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setBackgroundColor(BG);
+
+        LinearLayout header = new LinearLayout(this);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+        header.setPadding(dp(14), dp(8), dp(10), dp(8));
+        header.setBackgroundColor(Color.rgb(8,8,8));
+
+        TextView icon = text("🔒", 21, GOLD);
+        header.addView(icon, new LinearLayout.LayoutParams(dp(34), -2));
+
+        TextView title = text("LOCKGUARD", 17, GOLD2);
+        title.setLetterSpacing(.1f);
+        header.addView(title, new LinearLayout.LayoutParams(0, -2, 1));
+
+        TextView ver = text("v" + VERSION, 10, Color.GRAY);
+        ver.setPadding(dp(4), 0, dp(10), 0);
+        header.addView(ver, new LinearLayout.LayoutParams(-2, -2));
+
+        Button bio = new Button(this);
+        bio.setText("◎");
+        bio.setTextSize(18);
+        bio.setTextColor(GOLD2);
+        bio.setBackgroundColor(Color.TRANSPARENT);
+        bio.setContentDescription("Biometria");
+        header.addView(bio, new LinearLayout.LayoutParams(dp(46), dp(42)));
+        root.addView(header, new LinearLayout.LayoutParams(-1, -2));
+
+        web = new WebView(this);
+        web.setBackgroundColor(BG);
+        WebSettings s = web.getSettings();
+        s.setJavaScriptEnabled(true);
+        s.setDomStorageEnabled(true);
+        s.setDatabaseEnabled(true);
+        s.setLoadsImagesAutomatically(true);
+        s.setUseWideViewPort(false);
+        s.setLoadWithOverviewMode(false);
+        s.setBuiltInZoomControls(false);
+        s.setDisplayZoomControls(false);
+        s.setMediaPlaybackRequiresUserGesture(true);
+        s.setUserAgentString(s.getUserAgentString() + " LockGuardAndroid/" + VERSION);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) s.setSafeBrowsingEnabled(true);
+
+        CookieManager.getInstance().setAcceptCookie(true);
+        CookieManager.getInstance().setAcceptThirdPartyCookies(web, false);
+        WebView.setWebContentsDebuggingEnabled(false);
+
+        web.setWebChromeClient(new WebChromeClient());
+        web.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                webLoaded = true;
+                injectMobileEnhancements();
+            }
+        });
+
+        root.addView(web, new LinearLayout.LayoutParams(-1, 0, 1));
+        setContentView(root);
+        web.loadUrl(URL);
+
+        bio.setOnClickListener(v -> {
+            boolean enabled = prefs.getBoolean(PREF_BIOMETRIC, false);
+            if (enabled) {
+                promptBiometric(() -> {
+                    prefs.edit().putBoolean(PREF_BIOMETRIC, false).apply();
+                    toast("Entrada por biometria desativada");
+                }, true);
+            } else {
+                promptBiometric(() -> {
+                    prefs.edit().putBoolean(PREF_BIOMETRIC, true).apply();
+                    toast("Entrada por biometria ativada");
+                }, true);
+            }
+        });
+    }
+
+    private void injectMobileEnhancements() {
+        if (web == null) return;
+        String js = "(function(){" +
+            "try{" +
+            "var st=document.createElement('style');" +
+            "st.textContent='html,body{overscroll-behavior:none} body{padding-bottom:18px!important} button,input,select,textarea{min-height:42px} @media(max-width:700px){.wrap,.shell,.container{max-width:100%!important;width:100%!important}.main{padding-left:10px!important;padding-right:10px!important}}';" +
+            "document.head.appendChild(st);" +
+            "var f=document.querySelectorAll('*');for(var i=0;i<f.length;i++){if(f[i].childNodes.length===1&&f[i].childNodes[0].nodeType===3&&f[i].textContent.trim()==='Versão 0.7.03'){f[i].textContent='Web Engine 0.7.03';}}" +
+            "var session=localStorage.getItem('lockguard.auth.v1');" +
+            "if(!session&&typeof authOpen==='function'){setTimeout(function(){authOpen('login');},200);}" +
+            "}catch(e){}" +
+            "})();";
+        web.evaluateJavascript(js, null);
+    }
+
+    private void promptBiometric(Runnable success, boolean configuring) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            android.hardware.biometrics.BiometricPrompt prompt = new android.hardware.biometrics.BiometricPrompt.Builder(this)
+                    .setTitle(configuring ? "Configurar biometria" : "Desbloquear LockGuard")
+                    .setSubtitle("Confirme sua identidade")
+                    .setNegativeButton("Cancelar", getMainExecutor(), (dialog, which) -> {})
+                    .build();
+            prompt.authenticate(new CancellationSignal(), getMainExecutor(), new android.hardware.biometrics.BiometricPrompt.AuthenticationCallback() {
+                @Override public void onAuthenticationSucceeded(android.hardware.biometrics.BiometricPrompt.AuthenticationResult result) { success.run(); }
+                @Override public void onAuthenticationError(int errorCode, CharSequence errString) {
+                    if (configuring) toast(errString.toString());
+                }
+            });
+            return;
+        }
+
+        FingerprintManager fm = (FingerprintManager) getSystemService(Context.FINGERPRINT_SERVICE);
+        if (fm != null && fm.isHardwareDetected() && fm.hasEnrolledFingerprints()) {
+            fingerprintCancellation = new CancellationSignal();
+            fm.authenticate(null, fingerprintCancellation, 0, new FingerprintManager.AuthenticationCallback() {
+                @Override public void onAuthenticationSucceeded(FingerprintManager.AuthenticationResult result) { runOnUiThread(success); }
+                @Override public void onAuthenticationFailed() { runOnUiThread(() -> toast("Impressão digital não reconhecida")); }
+                @Override public void onAuthenticationError(int code, CharSequence message) {
+                    if (configuring) runOnUiThread(() -> toast(message.toString()));
+                }
+            }, null);
+            return;
+        }
+
+        KeyguardManager km = (KeyguardManager) getSystemService(KEYGUARD_SERVICE);
+        if (km != null && km.isKeyguardSecure()) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Biometria indisponível")
+                    .setMessage("Este aparelho não disponibilizou impressão digital para o LockGuard. Você pode continuar usando login, senha e senha mestra normalmente.")
+                    .setPositiveButton("OK", null)
+                    .show();
+        } else {
+            toast("Biometria não configurada neste aparelho");
+        }
+    }
+
+    private void toast(String text) {
+        Toast.makeText(this, text, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (web != null && web.canGoBack()) web.goBack(); else super.onBackPressed();
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (fingerprintCancellation != null) fingerprintCancellation.cancel();
+        if (web != null) {
+            web.stopLoading();
+            web.removeAllViews();
+            web.destroy();
+        }
+        super.onDestroy();
+    }
 }
