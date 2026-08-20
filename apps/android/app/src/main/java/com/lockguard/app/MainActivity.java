@@ -12,7 +12,9 @@ import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.view.Gravity;
 import android.view.View;
+import android.view.WindowInsets;
 import android.webkit.CookieManager;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -23,10 +25,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
-    private static final String VERSION = "0.0.2";
+    private static final String VERSION = "0.0.3";
     private static final String URL = "https://lockguardapp.vercel.app";
     private static final String PREFS = "lockguard_android";
     private static final String PREF_BIOMETRIC = "biometric_enabled";
+    private static final String PREF_BIOMETRIC_OFFERED = "biometric_offered";
     private static final int GOLD = Color.rgb(212,175,55);
     private static final int GOLD2 = Color.rgb(241,216,121);
     private static final int BG = Color.rgb(5,5,5);
@@ -37,6 +40,9 @@ public class MainActivity extends Activity {
     private LinearLayout root;
     private CancellationSignal fingerprintCancellation;
     private boolean webLoaded = false;
+    private boolean biometricPromptActive = false;
+    private boolean requiresUnlock = false;
+    private boolean forceWebLogin = false;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -45,14 +51,43 @@ public class MainActivity extends Activity {
         getWindow().setNavigationBarColor(BG);
         prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
         if (prefs.getBoolean(PREF_BIOMETRIC, false)) {
+            requiresUnlock = true;
             showBiometricGate();
         } else {
-            showApp();
+            showApp(false);
         }
     }
 
     private int dp(int value) {
         return (int) (value * getResources().getDisplayMetrics().density + .5f);
+    }
+
+    private void applySafeInsets(View view) {
+        final int left = view.getPaddingLeft();
+        final int top = view.getPaddingTop();
+        final int right = view.getPaddingRight();
+        final int bottom = view.getPaddingBottom();
+        view.setOnApplyWindowInsetsListener((v, insets) -> {
+            int insetTop;
+            int insetBottom;
+            int insetLeft;
+            int insetRight;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                android.graphics.Insets bars = insets.getInsets(WindowInsets.Type.systemBars());
+                insetTop = bars.top;
+                insetBottom = bars.bottom;
+                insetLeft = bars.left;
+                insetRight = bars.right;
+            } else {
+                insetTop = insets.getSystemWindowInsetTop();
+                insetBottom = insets.getSystemWindowInsetBottom();
+                insetLeft = insets.getSystemWindowInsetLeft();
+                insetRight = insets.getSystemWindowInsetRight();
+            }
+            v.setPadding(left + insetLeft, top + insetTop, right + insetRight, bottom + insetBottom);
+            return insets;
+        });
+        view.requestApplyInsets();
     }
 
     private TextView text(String value, int sp, int color) {
@@ -78,6 +113,7 @@ public class MainActivity extends Activity {
         gate.setGravity(Gravity.CENTER);
         gate.setPadding(dp(28), dp(30), dp(28), dp(30));
         gate.setBackgroundColor(BG);
+        applySafeInsets(gate);
 
         TextView lock = text("🔒", 52, GOLD);
         lock.setGravity(Gravity.CENTER);
@@ -110,17 +146,32 @@ public class MainActivity extends Activity {
         version.setPadding(0, dp(26), 0, 0);
         gate.addView(version, new LinearLayout.LayoutParams(-1, -2));
 
-        biometric.setOnClickListener(v -> promptBiometric(() -> showApp(), false));
-        password.setOnClickListener(v -> showApp());
+        biometric.setOnClickListener(v -> promptBiometric(() -> {
+            requiresUnlock = false;
+            showApp(false);
+        }, false));
+        password.setOnClickListener(v -> {
+            requiresUnlock = false;
+            showApp(true);
+        });
         setContentView(gate);
 
-        gate.postDelayed(() -> promptBiometric(() -> showApp(), false), 250);
+        gate.postDelayed(() -> {
+            if (!biometricPromptActive && requiresUnlock) {
+                promptBiometric(() -> {
+                    requiresUnlock = false;
+                    showApp(false);
+                }, false);
+            }
+        }, 250);
     }
 
-    private void showApp() {
+    private void showApp(boolean forceLogin) {
+        forceWebLogin = forceLogin;
         root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(BG);
+        applySafeInsets(root);
 
         LinearLayout header = new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
@@ -135,7 +186,7 @@ public class MainActivity extends Activity {
         header.addView(title, new LinearLayout.LayoutParams(0, -2, 1));
 
         TextView ver = text("v" + VERSION, 10, Color.GRAY);
-        ver.setPadding(dp(4), 0, dp(10), 0);
+        ver.setPadding(dp(4), 0, dp(6), 0);
         header.addView(ver, new LinearLayout.LayoutParams(-2, -2));
 
         Button bio = new Button(this);
@@ -143,12 +194,13 @@ public class MainActivity extends Activity {
         bio.setTextSize(18);
         bio.setTextColor(GOLD2);
         bio.setBackgroundColor(Color.TRANSPARENT);
-        bio.setContentDescription("Biometria");
+        bio.setContentDescription("Configurar biometria");
         header.addView(bio, new LinearLayout.LayoutParams(dp(46), dp(42)));
         root.addView(header, new LinearLayout.LayoutParams(-1, -2));
 
         web = new WebView(this);
         web.setBackgroundColor(BG);
+        web.addJavascriptInterface(new AndroidBridge(), "LockGuardAndroid");
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
@@ -171,7 +223,13 @@ public class MainActivity extends Activity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 webLoaded = true;
-                injectMobileEnhancements();
+                if (forceWebLogin) {
+                    forceWebLogin = false;
+                    web.evaluateJavascript("try{localStorage.removeItem('lockguard.auth.v1');sessionStorage.clear();}catch(e){}", null);
+                    web.postDelayed(() -> injectMobileEnhancements(), 150);
+                } else {
+                    injectMobileEnhancements();
+                }
             }
         });
 
@@ -184,11 +242,13 @@ public class MainActivity extends Activity {
             if (enabled) {
                 promptBiometric(() -> {
                     prefs.edit().putBoolean(PREF_BIOMETRIC, false).apply();
+                    requiresUnlock = false;
                     toast("Entrada por biometria desativada");
                 }, true);
             } else {
                 promptBiometric(() -> {
-                    prefs.edit().putBoolean(PREF_BIOMETRIC, true).apply();
+                    prefs.edit().putBoolean(PREF_BIOMETRIC, true).putBoolean(PREF_BIOMETRIC_OFFERED, true).apply();
+                    requiresUnlock = false;
                     toast("Entrada por biometria ativada");
                 }, true);
             }
@@ -199,28 +259,62 @@ public class MainActivity extends Activity {
         if (web == null) return;
         String js = "(function(){" +
             "try{" +
-            "var st=document.createElement('style');" +
-            "st.textContent='html,body{overscroll-behavior:none} body{padding-bottom:18px!important} button,input,select,textarea{min-height:42px} @media(max-width:700px){.wrap,.shell,.container{max-width:100%!important;width:100%!important}.main{padding-left:10px!important;padding-right:10px!important}}';" +
-            "document.head.appendChild(st);" +
-            "var f=document.querySelectorAll('*');for(var i=0;i<f.length;i++){if(f[i].childNodes.length===1&&f[i].childNodes[0].nodeType===3&&f[i].textContent.trim()==='Versão 0.7.03'){f[i].textContent='Web Engine 0.7.03';}}" +
-            "var session=localStorage.getItem('lockguard.auth.v1');" +
-            "if(!session&&typeof authOpen==='function'){setTimeout(function(){authOpen('login');},200);}" +
+            "if(!document.getElementById('lockguard-android-style')){" +
+            "var st=document.createElement('style');st.id='lockguard-android-style';" +
+            "st.textContent='html,body{overscroll-behavior:none} body{padding-bottom:18px!important} button,input,select,textarea{min-height:42px} @media(max-width:700px){.wrap,.shell,.container{max-width:100%!important;width:100%!important}.main{padding-left:10px!important;padding-right:10px!important}}';document.head.appendChild(st);}" +
+            "var all=document.querySelectorAll('button,a,[role=button]');for(var i=0;i<all.length;i++){var tx=(all[i].textContent||'').trim().toUpperCase();if(tx==='CONTA'){all[i].textContent='SAIR';}}" +
+            "var f=document.querySelectorAll('*');for(var j=0;j<f.length;j++){if(f[j].childNodes.length===1&&f[j].childNodes[0].nodeType===3&&f[j].textContent.trim()==='Versão 0.7.03'){f[j].textContent='Web Engine 0.7.3';}}" +
+            "var notify=function(){try{if(localStorage.getItem('lockguard.auth.v1')&&window.LockGuardAndroid){window.LockGuardAndroid.onSessionDetected();}}catch(e){}};" +
+            "notify();" +
+            "if(!window.__lockguardStorageHook){window.__lockguardStorageHook=true;var old=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){old.apply(this,arguments);if(k==='lockguard.auth.v1'){setTimeout(notify,50);}};}" +
+            "var session=localStorage.getItem('lockguard.auth.v1');if(!session&&typeof authOpen==='function'){setTimeout(function(){authOpen('login');},200);}" +
             "}catch(e){}" +
             "})();";
         web.evaluateJavascript(js, null);
     }
 
+    private void offerBiometricAfterLogin() {
+        if (prefs.getBoolean(PREF_BIOMETRIC, false) || prefs.getBoolean(PREF_BIOMETRIC_OFFERED, false) || isFinishing()) return;
+        prefs.edit().putBoolean(PREF_BIOMETRIC_OFFERED, true).apply();
+        new AlertDialog.Builder(this)
+                .setTitle("Ativar impressão digital?")
+                .setMessage("Use sua biometria para proteger o LockGuard sempre que abrir ou voltar ao aplicativo.")
+                .setNegativeButton("Agora não", null)
+                .setPositiveButton("Ativar", (dialog, which) -> promptBiometric(() -> {
+                    prefs.edit().putBoolean(PREF_BIOMETRIC, true).apply();
+                    requiresUnlock = false;
+                    toast("Biometria ativada");
+                }, true))
+                .show();
+    }
+
+    private class AndroidBridge {
+        @JavascriptInterface
+        public void onSessionDetected() {
+            runOnUiThread(() -> offerBiometricAfterLogin());
+        }
+    }
+
     private void promptBiometric(Runnable success, boolean configuring) {
+        if (biometricPromptActive) return;
+        biometricPromptActive = true;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             android.hardware.biometrics.BiometricPrompt prompt = new android.hardware.biometrics.BiometricPrompt.Builder(this)
                     .setTitle(configuring ? "Configurar biometria" : "Desbloquear LockGuard")
                     .setSubtitle("Confirme sua identidade")
-                    .setNegativeButton("Cancelar", getMainExecutor(), (dialog, which) -> {})
+                    .setNegativeButton("Cancelar", getMainExecutor(), (dialog, which) -> biometricPromptActive = false)
                     .build();
             prompt.authenticate(new CancellationSignal(), getMainExecutor(), new android.hardware.biometrics.BiometricPrompt.AuthenticationCallback() {
-                @Override public void onAuthenticationSucceeded(android.hardware.biometrics.BiometricPrompt.AuthenticationResult result) { success.run(); }
+                @Override public void onAuthenticationSucceeded(android.hardware.biometrics.BiometricPrompt.AuthenticationResult result) {
+                    biometricPromptActive = false;
+                    success.run();
+                }
                 @Override public void onAuthenticationError(int errorCode, CharSequence errString) {
+                    biometricPromptActive = false;
                     if (configuring) toast(errString.toString());
+                }
+                @Override public void onAuthenticationFailed() {
+                    if (configuring) toast("Biometria não reconhecida");
                 }
             });
             return;
@@ -230,15 +324,22 @@ public class MainActivity extends Activity {
         if (fm != null && fm.isHardwareDetected() && fm.hasEnrolledFingerprints()) {
             fingerprintCancellation = new CancellationSignal();
             fm.authenticate(null, fingerprintCancellation, 0, new FingerprintManager.AuthenticationCallback() {
-                @Override public void onAuthenticationSucceeded(FingerprintManager.AuthenticationResult result) { runOnUiThread(success); }
-                @Override public void onAuthenticationFailed() { runOnUiThread(() -> toast("Impressão digital não reconhecida")); }
+                @Override public void onAuthenticationSucceeded(FingerprintManager.AuthenticationResult result) {
+                    biometricPromptActive = false;
+                    runOnUiThread(success);
+                }
+                @Override public void onAuthenticationFailed() {
+                    runOnUiThread(() -> toast("Impressão digital não reconhecida"));
+                }
                 @Override public void onAuthenticationError(int code, CharSequence message) {
+                    biometricPromptActive = false;
                     if (configuring) runOnUiThread(() -> toast(message.toString()));
                 }
             }, null);
             return;
         }
 
+        biometricPromptActive = false;
         KeyguardManager km = (KeyguardManager) getSystemService(KEYGUARD_SERVICE);
         if (km != null && km.isKeyguardSecure()) {
             new AlertDialog.Builder(this)
@@ -256,6 +357,22 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        if (prefs != null && prefs.getBoolean(PREF_BIOMETRIC, false) && requiresUnlock && !biometricPromptActive) {
+            showBiometricGate();
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        if (prefs != null && prefs.getBoolean(PREF_BIOMETRIC, false) && !biometricPromptActive) {
+            requiresUnlock = true;
+        }
+        super.onStop();
+    }
+
+    @Override
     public void onBackPressed() {
         if (web != null && web.canGoBack()) web.goBack(); else super.onBackPressed();
     }
@@ -265,6 +382,7 @@ public class MainActivity extends Activity {
         if (fingerprintCancellation != null) fingerprintCancellation.cancel();
         if (web != null) {
             web.stopLoading();
+            web.removeJavascriptInterface("LockGuardAndroid");
             web.removeAllViews();
             web.destroy();
         }
