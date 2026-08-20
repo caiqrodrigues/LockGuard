@@ -24,6 +24,11 @@ jobs:
         with:
           gradle-version: "8.10.2"
 
+      - name: Normalize Android source imports
+        shell: bash
+        run: |
+          sed -i 's/((ClipboardManager)/((android.content.ClipboardManager)/g' apps/android/app/src/main/java/com/lockguard/app/MainActivity.java
+
       - name: Build APKs
         id: build
         shell: bash
