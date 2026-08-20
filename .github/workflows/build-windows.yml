@@ -11,7 +11,7 @@ on:
       - ".github/workflows/build-windows.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   windows:
@@ -25,15 +25,26 @@ jobs:
       - uses: swatinem/rust-cache@v2
         with:
           workspaces: apps/windows/src-tauri
+
       - name: Install Tauri CLI
         working-directory: apps/windows
         run: npm install
+
       - name: Prepare frontend
         run: node scripts/prepare-windows.mjs
+
       - name: Build
+        id: build
+        shell: pwsh
         working-directory: apps/windows
-        run: npx tauri build --bundles nsis
+        run: |
+          npx tauri build --bundles nsis 2>&1 | Tee-Object -FilePath ../../windows-build.log
+          $code = $LASTEXITCODE
+          "exit_code=$code" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          exit $code
+
       - name: Collect executables
+        if: steps.build.outcome == 'success'
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path release | Out-Null
@@ -43,10 +54,38 @@ jobs:
           $setup = Get-ChildItem "apps/windows/src-tauri/target/release/bundle/nsis" -Filter "*.exe" -File | Select-Object -First 1
           if (-not $setup) { throw "NSIS installer not found" }
           Copy-Item $setup.FullName "release/LockGuard-Setup.exe"
+
       - uses: actions/upload-artifact@v4
+        if: steps.build.outcome == 'success'
         with:
-          name: LockGuard-Windows-v0.7.03
+          name: LockGuard-Windows-v0.0.1
           path: |
             release/LockGuard-Portable.exe
             release/LockGuard-Setup.exe
           if-no-files-found: error
+
+      - name: Persist build status
+        if: always()
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path ci-status | Out-Null
+          @(
+            "workflow=Build Windows",
+            "version=0.0.1",
+            "commit=$env:GITHUB_SHA",
+            "outcome=${{ steps.build.outcome }}",
+            "exit_code=${{ steps.build.outputs.exit_code }}",
+            "run_id=$env:GITHUB_RUN_ID",
+            "run_attempt=$env:GITHUB_RUN_ATTEMPT",
+            "updated=$([DateTime]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ'))"
+          ) | Set-Content ci-status/windows-latest.txt
+          if (Test-Path windows-build.log) {
+            Get-Content windows-build.log -Tail 180 | Set-Content ci-status/windows-build-tail.txt
+          }
+          git config user.name "LockGuard CI"
+          git config user.email "actions@users.noreply.github.com"
+          git add ci-status/windows-latest.txt ci-status/windows-build-tail.txt
+          if (-not (git diff --cached --quiet)) {
+            git commit -m "ci(windows): record build status [skip ci]"
+            git push
+          }
