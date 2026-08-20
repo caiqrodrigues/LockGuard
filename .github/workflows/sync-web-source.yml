@@ -1,0 +1,41 @@
+name: Sync LockGuard Web Source
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/sync-web-source.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import current production web
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p apps/web
+          curl -fsSL https://lockguardapp.vercel.app/index.html -o apps/web/index.html
+          curl -fsSL https://lockguardapp.vercel.app/app.js -o apps/web/app.js
+          curl -fsSL https://lockguardapp.vercel.app/style.css -o apps/web/style.css
+          curl -fsSL https://lockguardapp.vercel.app/favicon.svg -o apps/web/favicon.svg
+          curl -fsSL https://lockguardapp.vercel.app/og-image.png -o apps/web/og-image.png
+          curl -fsSL https://lockguardapp.vercel.app/argon2.umd.min.js -o apps/web/argon2.umd.min.js
+          sed -i "s/Versão 0.7.02/Versão 0.7.03/g; s/APP_VERSION='0.7.02'/APP_VERSION='0.7.03'/g" apps/web/index.html apps/web/app.js || true
+          cat > apps/web/package.json <<'EOF'
+          {"name":"lockguard-web","version":"0.7.03","private":true,"type":"module","scripts":{"build":"node build.mjs"},"dependencies":{"hash-wasm":"4.12.0"}}
+          EOF
+          cat > apps/web/build.mjs <<'EOF'
+          import { cpFile, mkdir } from 'node:fs/promises';
+          await mkdir('dist',{recursive:true});
+          for (const f of ['index.html','app.js','style.css','favicon.svg','og-image.png','argon2.umd.min.js']) await cpFile(f,'dist/'+f);
+          EOF
+          git config user.name "LockGuard Automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add apps/web
+          git commit -m "sync: import LockGuard web v0.7.03" || exit 0
+          git push
