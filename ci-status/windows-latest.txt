@@ -1,8 +1,9 @@
 workflow=Build Windows
-version=0.0.1
-commit=c26c90f1d1eb2e7dd48a281d00d70b2eb7ac1116
-outcome=running
+version=0.0.2
+web_version=0.7.4
+commit=c3e9258628b79aa3047fb22e8853e78d39280993
+outcome=skipped
 exit_code=
-run_id=32422411876
+run_id=32423493558
 run_attempt=1
-updated=2026-08-20T22:03:10Z
+updated=2026-08-20T22:17:01Z
