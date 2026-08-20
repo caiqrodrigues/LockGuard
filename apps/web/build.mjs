@@ -1,6 +1,10 @@
 import { cpFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 await mkdir('dist',{recursive:true});
 for (const f of ['index.html','app.js','style.css','favicon.svg','og-image.png','argon2.umd.min.js']) await cpFile(f,'dist/'+f);
-const app = await readFile('dist/app.js','utf8');
+let app = await readFile('dist/app.js','utf8');
+app = app.replace("const APP_VERSION='0.7.3';", "const APP_VERSION='0.7.4';");
 const account = await readFile('account.js','utf8');
 await writeFile('dist/app.js', app + '\n' + account + '\n', 'utf8');
+let index = await readFile('dist/index.html','utf8');
+index = index.replace(/Versão 0\.7\.(?:03|3)/g, 'Versão 0.7.4');
+await writeFile('dist/index.html', index, 'utf8');
