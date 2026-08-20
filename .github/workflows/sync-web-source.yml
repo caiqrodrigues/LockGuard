@@ -25,17 +25,12 @@ jobs:
           curl -fsSL https://lockguardapp.vercel.app/favicon.svg -o apps/web/favicon.svg
           curl -fsSL https://lockguardapp.vercel.app/og-image.png -o apps/web/og-image.png
           curl -fsSL https://lockguardapp.vercel.app/argon2.umd.min.js -o apps/web/argon2.umd.min.js
-          sed -i "s/Versão 0\.7\.02/Versão 0.7.3/g; s/Versão 0\.7\.03/Versão 0.7.3/g; s/APP_VERSION='0\.7\.02'/APP_VERSION='0.7.3'/g; s/APP_VERSION='0\.7\.03'/APP_VERSION='0.7.3'/g" apps/web/index.html apps/web/app.js || true
+          sed -i "s/Versão 0\.7\.03/Versão 0.7.4/g; s/Versão 0\.7\.3/Versão 0.7.4/g; s/APP_VERSION='0\.7\.03'/APP_VERSION='0.7.4'/g; s/APP_VERSION='0\.7\.3'/APP_VERSION='0.7.4'/g" apps/web/index.html apps/web/app.js || true
           cat > apps/web/package.json <<'EOF'
-          {"name":"lockguard-web","version":"0.7.3","private":true,"type":"module","scripts":{"build":"node build.mjs"},"dependencies":{"hash-wasm":"4.12.0"}}
-          EOF
-          cat > apps/web/build.mjs <<'EOF'
-          import { cpFile, mkdir } from 'node:fs/promises';
-          await mkdir('dist',{recursive:true});
-          for (const f of ['index.html','app.js','style.css','favicon.svg','og-image.png','argon2.umd.min.js']) await cpFile(f,'dist/'+f);
+          {"name":"lockguard-web","version":"0.7.4","private":true,"type":"module","scripts":{"build":"node build.mjs"},"dependencies":{"hash-wasm":"4.12.0"}}
           EOF
           git config user.name "LockGuard Automation"
           git config user.email "actions@users.noreply.github.com"
           git add apps/web
-          git commit -m "sync: import LockGuard web v0.7.3" || exit 0
+          git commit -m "sync: import LockGuard web v0.7.4" || exit 0
           git push
