@@ -1,6 +1,2 @@
-/home/runner/work/LockGuard/LockGuard/apps/android/app/src/main/java/com/lockguard/app/MainActivity.java:65: error: reference to ClipboardManager is ambiguous
 Note: /home/runner/work/LockGuard/LockGuard/apps/android/app/src/main/java/com/lockguard/app/MainActivity.java uses or overrides a deprecated API.
-FAILURE: Build failed with an exception.
-* What went wrong:
-Execution failed for task ':app:compileDebugJavaWithJavac'.
-org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':app:compileDebugJavaWithJavac'.
+Note: /home/runner/work/LockGuard/LockGuard/apps/android/app/src/main/java/com/lockguard/app/MainActivity.java uses or overrides a deprecated API.
