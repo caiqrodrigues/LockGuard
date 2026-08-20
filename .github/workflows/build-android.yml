@@ -73,7 +73,7 @@ jobs:
           "$BUILD_TOOLS/apksigner" verify --verbose --print-certs "$APK" | tee android-apk-validation.txt
           "$BUILD_TOOLS/aapt" dump badging "$APK" | tee -a android-apk-validation.txt
           grep -q "package: name='com.lockguard.app'" android-apk-validation.txt
-          grep -q "versionName='0.0.2'" android-apk-validation.txt
+          grep -q "versionName='0.0.3'" android-apk-validation.txt
           grep -q "CN=LockGuard Android Debug" android-apk-validation.txt
           echo "APK_SIZE_BYTES=$(stat -c%s "$APK")" | tee -a android-apk-validation.txt
           echo "APK_SHA256=$(sha256sum "$APK" | awk '{print $1}')" | tee -a android-apk-validation.txt
@@ -83,14 +83,14 @@ jobs:
         shell: bash
         run: |
           mkdir -p release/android
-          cp apps/android/app/build/outputs/apk/debug/app-debug.apk release/android/LockGuard-v0.0.2-debug.apk
-          cp apps/android/app/build/outputs/apk/release/app-release-unsigned.apk release/android/LockGuard-v0.0.2-unsigned.apk
+          cp apps/android/app/build/outputs/apk/debug/app-debug.apk release/android/LockGuard-v0.0.3-debug.apk
+          cp apps/android/app/build/outputs/apk/release/app-release-unsigned.apk release/android/LockGuard-v0.0.3-unsigned.apk
           cp android-apk-validation.txt release/android/VALIDATION.txt
 
       - uses: actions/upload-artifact@v4
         if: steps.build.outcome == 'success'
         with:
-          name: LockGuard-Android-v0.0.2
+          name: LockGuard-Android-v0.0.3
           path: release/android/*
           if-no-files-found: error
 
@@ -103,7 +103,7 @@ jobs:
           exit_code="${{ steps.build.outputs.exit_code }}"
           {
             echo "workflow=Build Android"
-            echo "version=0.0.2"
+            echo "version=0.0.3"
             echo "commit=${GITHUB_SHA}"
             echo "outcome=${outcome}"
             echo "exit_code=${exit_code}"
