@@ -27,5 +27,6 @@ android {
 }
 
 dependencies {
-    implementation 'org.bouncycastle:bcprov-jdk18on:1.78.1'
+    // A camada nativa não duplica a criptografia do cofre.
+    // O engine Web 0.7.3 executa Argon2id/AES-GCM, reduzindo tamanho e consumo do APK.
 }
