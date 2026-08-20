@@ -1,0 +1,8 @@
+workflow=Build Windows
+version=0.0.1
+commit=071b64e1e678a0c7e6bc229a19162cddbaf76742
+outcome=running
+exit_code=
+run_id=32410011619
+run_attempt=1
+updated=2026-08-20T19:41:27Z
