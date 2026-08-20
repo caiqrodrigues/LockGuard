@@ -31,11 +31,19 @@ jobs:
           node -e "const m=require('./apps/browser-extension/manifest.json'); if(m.version!=='0.0.2') process.exit(1)"
           node -e "const p=require('./apps/web/package.json'); if(p.version!=='0.7.4') process.exit(1)"
 
+      - name: Build Web
+        working-directory: apps/web
+        run: npm run build
+
+      - name: Validate built Web version
+        run: |
+          grep -q "APP_VERSION='0.7.4'" apps/web/dist/app.js
+          grep -q "WEB_VERSION = '0.7.4'" apps/web/dist/app.js
+
       - name: Package Web and Extension
         run: |
           mkdir -p release/web release/extension
-          cp -R apps/web/. release/web/
-          rm -rf release/web/node_modules release/web/dist
+          cp -R apps/web/dist/. release/web/
           cp -R apps/browser-extension/. release/extension/
           cd release
           zip -qr LockGuard-Web-v0.7.4.zip web
