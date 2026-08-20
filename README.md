@@ -1,30 +1,89 @@
-# LockGuard
+# 🔒 LockGuard
 
-Gerenciador de senhas Black/Gold multiplataforma com Web, extensão de navegador, Windows e Android.
+Gerenciador de senhas multiplataforma com identidade Black/Gold, cofre criptografado, sincronização E2EE, monitoramento de vazamentos, Security Dashboard, extensão de navegador e aplicativos para Windows e Android.
 
-## Versões atuais
-- Web / Extensão / Windows: **0.7.03**
-- Android: **0.0.2**
+## Versões oficiais
 
-## Plataformas
-- `apps/web` — site publicado no Vercel.
-- `apps/browser-extension` — extensão Manifest V3 para Opera/Chrome/Edge.
-- `apps/windows` — aplicativo Tauri para Windows.
-- `apps/android` — aplicativo Android nativo leve, com suporte a Android 8.0+.
+| Plataforma | Versão | Status |
+|---|---:|---|
+| Web | **0.7.3** | ✅ Produção |
+| Extensão | **0.0.1** | ✅ Funcional / Opera, Chrome e Edge |
+| Windows | **0.0.1** | ✅ Build automatizado / Portable + Setup |
+| Android | **0.0.2** | ✅ Build automatizado / APK |
 
-## Builds automatizados
-- `.github/workflows/build-windows.yml` — gera `LockGuard-Portable.exe` e `LockGuard-Setup.exe`.
-- `.github/workflows/build-android.yml` — gera APKs Android de teste/release.
-- `.github/workflows/verify.yml` — verificações de integridade do projeto.
+> Cada plataforma possui sua própria linha de versão. Uma alteração em uma plataforma não obriga incremento nas demais.
+
+## O que o projeto entrega
+
+- Gerador criptograficamente seguro de senhas.
+- Medidor e análise de força de senha.
+- Cofre criptografado com logins, notas, cartões, endereços e documentos.
+- Derivação de chave com Argon2id.
+- Criptografia AES-GCM 256 no cliente.
+- Sincronização do cofre cifrado com Supabase.
+- Row Level Security (RLS) por usuário.
+- Monitoramento de senhas expostas usando k-anonimato / Pwned Passwords.
+- Security Dashboard com senhas fortes, fracas, reutilizadas, antigas e expostas.
+- Extensão Manifest V3 com autofill.
+- Aplicativo Windows via Tauri.
+- Aplicativo Android otimizado com paridade funcional do Web e entrada biométrica opcional.
+- CI/CD com GitHub Actions para validação e builds.
+
+## Arquitetura
+
+```text
+LockGuard
+├── apps/web                 Web 0.7.3 / Vercel
+├── apps/browser-extension   Extensão 0.0.1 / Manifest V3
+├── apps/windows             Windows 0.0.1 / Tauri 2
+├── apps/android             Android 0.0.2
+├── docs                     Segurança e arquitetura
+└── .github/workflows        CI, Windows, Android e sincronização Web
+```
+
+O Web é a implementação funcional de referência. O Android usa uma camada nativa de segurança e biometria ao redor do engine Web responsivo para manter paridade de funcionalidades e reduzir divergências entre plataformas. O Windows reutiliza o frontend Web empacotado pelo Tauri.
+
+## Tecnologias
+
+**Frontend:** HTML5, CSS3, JavaScript, Web Crypto API, WebAssembly/Argon2.  
+**Backend:** Supabase Auth, PostgreSQL e Row Level Security.  
+**Deploy Web:** Vercel.  
+**Browser:** Manifest V3 / Chrome APIs.  
+**Windows:** Rust, Tauri 2, WebView2 e NSIS.  
+**Android:** Java, Android WebView, APIs biométricas nativas e Gradle.  
+**CI/CD:** GitHub Actions.
 
 ## Segurança
-O projeto utiliza criptografia client-side, AES-GCM 256, Argon2id para derivação da chave do cofre, Supabase Auth/Postgres com RLS, sincronização de cofre cifrado e verificação de senhas comprometidas por k-anonimato.
+
+O LockGuard utiliza arquitetura de criptografia client-side: o conteúdo do cofre é cifrado antes da sincronização. O servidor recebe o material cifrado e metadados necessários à sincronização. O projeto não deve ser apresentado como formalmente auditado enquanto não passar por auditoria independente.
+
+Mais detalhes em [`docs/SECURITY.md`](docs/SECURITY.md) e [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+
+## Builds
+
+### Windows
+
+O workflow `Build Windows` gera:
+
+- `LockGuard-Portable.exe`
+- `LockGuard-Setup.exe`
+
+### Android
+
+O workflow `Build Android` gera:
+
+- `LockGuard-v0.0.2-debug.apk` — instalação direta para testes.
+- `LockGuard-v0.0.2-unsigned.apk` — release sem assinatura de distribuição.
 
 ## Produção Web
-https://lockguardapp.vercel.app
 
-## Android
-A linha Android possui versionamento próprio. A versão `0.0.1` foi o primeiro APK funcional validado em aparelho real. A `0.0.2` introduz login obrigatório na abertura, novo ícone com cadeado e redesign Black/Gold mais próximo do produto Web.
+**https://lockguardapp.vercel.app**
 
-## Status
-Web e extensão já foram validados em uso. Windows já possui build automatizado funcional. Android é validado por build no GitHub Actions e teste em aparelho real antes de ser tratado como release estável.
+## Histórico Android
+
+- **0.0.1** — primeiro APK funcional validado em aparelho real.
+- **0.0.2** — novo ícone, login inicial, redesign, paridade com Web e biometria opcional.
+
+## Nota de projeto
+
+O LockGuard está em desenvolvimento ativo. Recursos só são marcados como validados depois de build e teste real na plataforma correspondente.
