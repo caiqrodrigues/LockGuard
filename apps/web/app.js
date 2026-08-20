@@ -1,5 +1,5 @@
 const $=id=>document.getElementById(id);
-const APP_VERSION='0.7.03';
+const APP_VERSION='0.7.3';
 const SUPABASE_URL='https://xyjxznihdnqqcsbtfulh.supabase.co';
 const SUPABASE_KEY='sb_publishable_ceho4hLIMAczMa46dXDrRA_p_H_Pm7A';
 const AUTH_KEY='lockguard.auth.v1',LEGACY_KEY='lockguard.vault.v1',VAULT_PREFIX='lockguard.vault.v2.';
