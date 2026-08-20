@@ -3,6 +3,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <application
         android:allowBackup="false"
+        android:icon="@drawable/ic_lockguard"
+        android:roundIcon="@drawable/ic_lockguard"
         android:label="LockGuard"
         android:usesCleartextTraffic="false"
         android:theme="@style/AppTheme">
