@@ -1,4 +1,4 @@
-import { cp, rm, mkdir, readdir } from "node:fs/promises";
+import { cp, rm, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -13,4 +13,13 @@ for (const name of await readdir(source)) {
   if (name === "vercel.json" || name === "package.json") continue;
   await cp(resolve(source, name), resolve(target, name), { recursive: true });
 }
-console.log(`Windows frontend synchronized from ${source}`);
+
+const appPath = resolve(target, "app.js");
+const appJs = await readFile(appPath, "utf8");
+await writeFile(
+  appPath,
+  appJs + `\n;(()=>{const el=document.getElementById('versionLabel');if(el)el.textContent='Windows 0.0.1 • Web 0.7.3';})();\n`,
+  "utf8"
+);
+
+console.log(`Windows frontend synchronized from ${source} — Windows 0.0.1 / Web 0.7.3`);
