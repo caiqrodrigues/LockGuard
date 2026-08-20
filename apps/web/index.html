@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#070707">
+<meta name="referrer" content="no-referrer">
+<title>LockGuard // Password Manager</title>
+
+<meta name="description" content="LockGuard — gerador e cofre seguro de senhas com criptografia ponta a ponta.">
+<meta name="application-name" content="LockGuard">
+<meta name="apple-mobile-web-app-title" content="LockGuard">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="LockGuard">
+<meta property="og:title" content="LockGuard">
+<meta property="og:description" content="Gerador e cofre seguro de senhas com criptografia ponta a ponta.">
+<meta property="og:url" content="https://lockguardapp.vercel.app/">
+<meta property="og:image" content="https://lockguardapp.vercel.app/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="LockGuard">
+<meta name="twitter:description" content="Gerador e cofre seguro de senhas com criptografia ponta a ponta.">
+<meta name="twitter:image" content="https://lockguardapp.vercel.app/og-image.png">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="shortcut icon" href="/favicon.svg">
+
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="noise"></div>
+<main class="shell">
+<header class="topbar">
+  <div class="brand">
+    <div class="logo" aria-hidden="true">
+      <svg viewBox="0 0 64 64"><rect x="13" y="28" width="38" height="27" rx="5"/><path d="M21 28v-8c0-8 5-13 11-13s11 5 11 13v8h-7v-8c0-4-2-6-4-6s-4 2-4 6v8z"/><circle cx="32" cy="40" r="4" class="key"/><rect x="30.5" y="43" width="3" height="7" rx="1.5" class="key"/></svg>
+    </div>
+    <div><small>SECURE PASSWORD MANAGER</small><h1>LOCK<span>GUARD</span></h1></div>
+  </div>
+  <div class="header-actions"><span class="sync-pill">● E2EE SYNC</span><button id="accountBtn" class="account-btn">ENTRAR</button></div>
+</header>
+
+<nav class="tabs">
+<button class="tab active" data-view="generator">01 // GERADOR</button>
+<button class="tab" data-view="tester">02 // TESTE DE FORÇA</button>
+<button class="tab" data-view="vault">03 // COFRE SEGURO</button>
+<button class="tab" data-view="dashboard">04 // SECURITY DASHBOARD</button>
+</nav>
+
+<section id="view-generator" class="view active">
+  <article class="panel hero">
+    <div class="section-head"><div><p>SECURE PASSWORD GENERATOR</p><h2>Crie senhas difíceis de adivinhar.</h2></div><span id="genBadge" class="badge">FORTE</span></div>
+    <label>ESSA SENHA É PARA</label><input id="passwordFor" class="input" placeholder="Ex.: Gmail, Banco, Netflix..." maxlength="80">
+    <div class="password-box">
+      <div class="mini"><span>OUTPUT</span><span id="genScore">0/100</span></div>
+      <div class="password-row"><input id="generated" readonly><button id="showGen" class="icon">◉</button><button id="copyGen" class="icon">⧉</button></div>
+    </div>
+    <div class="actions"><button id="generateBtn" class="btn primary">GERAR NOVA</button><button id="saveGenBtn" class="btn secondary">SALVAR NO COFRE</button></div>
+    <div class="meter"><i id="genBar"></i></div><div id="genFeedback" class="feedback"></div>
+  </article>
+  <div class="grid">
+    <article class="panel compact">
+      <div class="section-head small"><div><p>CONFIGURAÇÃO</p><h3>Composição</h3></div><b id="lengthLabel">16</b></div>
+      <div class="range-line"><button id="minus">−</button><input id="length" type="range" min="6" max="64" value="16"><button id="plus">+</button></div>
+      <label class="switch"><span>Maiúsculas <small>A-Z</small></span><input id="upper" type="checkbox" checked><i></i></label>
+      <label class="switch"><span>Minúsculas <small>a-z</small></span><input id="lower" type="checkbox" checked><i></i></label>
+      <label class="switch"><span>Números <small>0-9</small></span><input id="numbers" type="checkbox" checked><i></i></label>
+      <label class="switch"><span>Símbolos <small>!@#$%</small></span><input id="symbols" type="checkbox" checked><i></i></label>
+      <label class="switch"><span>Evitar ambíguos <small>0 O o 1 l I</small></span><input id="ambiguous" type="checkbox" checked><i></i></label>
+    </article>
+    <article class="panel compact info">
+      <p>INTELIGÊNCIA DE SENHA</p><h3>Avaliação automática</h3>
+      <p class="muted">O LockGuard penaliza sequências, repetições, datas, padrões de teclado e palavras comuns. A geração tenta atingir pelo menos 85/100.</p>
+      <div class="security-line">◈ Web Crypto RNG</div><div class="security-line">◈ Análise local</div><div class="security-line">◈ Nenhuma senha gerada é enviada</div>
+    </article>
+  </div>
+</section>
+
+<section id="view-tester" class="view">
+  <article class="panel hero">
+    <div class="section-head"><div><p>PASSWORD INTELLIGENCE</p><h2>Teste a força de qualquer senha.</h2></div><span id="testBadge" class="badge">ANÁLISE</span></div>
+    <div class="password-row"><input id="testPassword" class="input" type="password" placeholder="Digite uma senha para avaliar"><button id="showTest" class="icon">◉</button></div>
+    <div class="score-big"><strong id="testScore">0</strong><span>/100</span><b id="testLabel">AGUARDANDO</b></div>
+    <div class="meter"><i id="testBar"></i></div><div id="testFeedback" class="feedback"></div>
+  </article>
+</section>
+
+<section id="view-vault" class="view">
+  <article class="panel vault">
+    <div id="vaultGate" class="center-card">
+      <p>LOCKGUARD ACCOUNT</p><h2>Entre para acessar seu cofre sincronizado</h2>
+      <p class="muted">O login identifica sua conta. A senha mestra cifra e decifra o cofre apenas no seu dispositivo.</p>
+      <button id="gateLogin" class="btn primary">ENTRAR / CRIAR CONTA</button>
+    </div>
+    <div id="vaultLocked" class="center-card hidden">
+      <p>END-TO-END ENCRYPTED VAULT</p><h2 id="vaultTitle">Criar cofre</h2>
+      <p id="vaultText" class="muted">Defina uma senha mestra forte. Ela nunca é enviada ao servidor.</p>
+      <label>SENHA MESTRA</label><input id="master" class="input" type="password" autocomplete="current-password">
+      <div id="masterConfirmWrap"><label>CONFIRMAR SENHA MESTRA</label><input id="masterConfirm" class="input" type="password" autocomplete="new-password"></div>
+      <button id="unlockBtn" class="btn primary wide">CRIAR COFRE</button>
+    </div>
+    <div id="vaultOpen" class="hidden">
+      <div class="vault-toolbar"><div><p>LOCKGUARD VAULT</p><h3><span id="vaultCount">0</span> itens <small id="cloudStatus">LOCAL</small></h3></div>
+      <div class="toolbar-actions"><button id="newItem" class="btn primary">+ NOVA SENHA</button><button id="syncBtn" class="btn secondary">SINCRONIZAR</button><button id="exportBackup" class="btn secondary">BACKUP</button><button id="importBackup" class="btn secondary">RESTAURAR</button><button id="lockBtn" class="btn secondary">BLOQUEAR</button><input id="backupFile" type="file" accept=".lockguard,.json,application/json" class="hidden"></div></div>
+      <div class="vault-search-row">
+      <input id="vaultSearch" class="input" type="search" placeholder="Buscar no cofre...">
+      <select id="vaultTypeFilter" class="input select-input">
+        <option value="">TODOS OS TIPOS</option>
+        <option value="login">LOGIN</option>
+        <option value="note">NOTA SEGURA</option>
+        <option value="card">CARTÃO</option>
+        <option value="address">ENDEREÇO</option>
+        <option value="document">DOCUMENTO</option>
+      </select>
+    </div>
+      <div id="vaultList" class="vault-list"></div>
+    </div>
+  </article>
+</section>
+
+
+<section id="view-dashboard" class="view">
+  <article class="panel hero dashboard-panel">
+    <div class="section-head">
+      <div><p>SECURITY CENTER</p><h2>Painel geral de segurança.</h2></div>
+      <span id="dashGrade" class="badge">BLOQUEADO</span>
+    </div>
+
+    <div id="dashboardLocked" class="center-card">
+      <p>COFRE NECESSÁRIO</p>
+      <h3>Desbloqueie seu cofre para analisar a segurança.</h3>
+      <p class="muted">A análise de senhas, reutilização e vazamentos ocorre no navegador.</p>
+      <button id="dashOpenVault" class="btn primary">ABRIR COFRE</button>
+    </div>
+
+    <div id="dashboardOpen" class="hidden">
+      <div class="dashboard-score-row">
+        <div class="security-score"><strong id="securityScore">0</strong><span>/100</span><small>SEGURANÇA GERAL</small></div>
+        <div class="dashboard-actions">
+          <button id="scanLeaksBtn" class="btn primary">VERIFICAR VAZAMENTOS</button>
+          <div id="lastLeakScan" class="muted tiny">Última verificação: nunca</div>
+        </div>
+      </div>
+
+      <div class="metric-grid">
+        <div class="metric"><strong id="metricStrong">0</strong><span>Senhas fortes</span></div>
+        <div class="metric danger"><strong id="metricWeak">0</strong><span>Senhas fracas</span></div>
+        <div class="metric warn"><strong id="metricReused">0</strong><span>Reutilizadas</span></div>
+        <div class="metric danger"><strong id="metricExposed">0</strong><span>Em vazamentos</span></div>
+        <div class="metric warn"><strong id="metricOld">0</strong><span>Antigas (+1 ano)</span></div>
+        <div class="metric"><strong id="metricTotal">0</strong><span>Logins analisados</span></div>
+      </div>
+
+      <div class="dashboard-grid">
+        <div class="dashboard-card">
+          <div class="section-head small"><div><p>RECOMENDAÇÕES</p><h3>O que precisa de atenção</h3></div></div>
+          <div id="securityRecommendations" class="security-list"></div>
+        </div>
+        <div class="dashboard-card">
+          <div class="section-head small"><div><p>BREACH MONITOR</p><h3>Monitoramento de vazamentos</h3></div></div>
+          <p class="muted">O LockGuard verifica suas senhas com k-anonimato: somente 5 caracteres do hash SHA-1 são enviados ao serviço de Pwned Passwords.</p>
+          <div id="breachStatus" class="security-line">◈ Aguardando cofre</div>
+          <div id="extensionStatus" class="security-line">◈ Extensão do navegador: não detectada</div>
+        </div>
+      </div>
+    </div>
+  </article>
+</section>
+
+<section class="badges">
+<div><b>AES-GCM 256</b><small>Cofre cifrado</small></div><div><b>ARGON2ID</b><small>64 MiB • 3 passes</small></div><div><b>WEB CRYPTO RNG</b><small>Geração segura</small></div><div><b>RLS POR USUÁRIO</b><small>Isolamento no banco</small></div><div><b>AUTO-LOCK</b><small>2 min / trocar aba</small></div><div><b>BREACH MONITOR</b><small>K-anonimato</small></div><div><b>E2EE CLOUD</b><small>Servidor só vê cifra</small></div>
+</section>
+<footer><span id="versionLabel">Versão 0.7.03</span><span>ZERO-KNOWLEDGE STYLE ARCHITECTURE • SUPABASE SYNC</span></footer>
+</main>
+
+<div id="authModal" class="modal-bg hidden"><div class="modal">
+<p>LOCKGUARD IDENTITY</p><h2 id="authTitle">Acessar LockGuard</h2>
+<div class="auth-tabs"><button id="loginTab" class="active">ENTRAR</button><button id="signupTab">CRIAR CONTA</button></div>
+<label>E-MAIL</label><input id="authEmail" class="input" type="email" autocomplete="email">
+<label>SENHA DA CONTA</label><input id="authPassword" class="input" type="password" autocomplete="current-password">
+<div id="authConfirmWrap" class="hidden"><label>CONFIRMAR SENHA</label><input id="authConfirm" class="input" type="password" autocomplete="new-password"></div>
+<div id="authMessage" class="notice hidden"></div>
+<div class="actions"><button id="closeAuth" class="btn secondary">CANCELAR</button><button id="submitAuth" class="btn primary">ENTRAR</button></div>
+<p class="muted tiny">A senha da conta autentica você. A senha mestra é independente e não é enviada ao servidor.</p>
+</div></div>
+
+<div id="itemModal" class="modal-bg hidden"><div class="modal item-modal">
+<p>VAULT ENTRY</p><h2 id="itemTitle">Novo item</h2>
+
+<label>TIPO</label>
+<select id="itemType" class="input select-input">
+  <option value="login">LOGIN / SENHA</option>
+  <option value="note">NOTA SEGURA</option>
+  <option value="card">CARTÃO</option>
+  <option value="address">ENDEREÇO</option>
+  <option value="document">DOCUMENTO</option>
+</select>
+
+<label>NOME / TÍTULO</label><input id="itemName" class="input" placeholder="Ex.: Gmail, Cartão principal, RG...">
+
+<div class="type-fields" data-types="login">
+  <label>USUÁRIO / E-MAIL</label><input id="itemUser" class="input">
+  <label>SENHA</label><input id="itemPassword" class="input" type="password">
+  <label>URL</label><input id="itemUrl" class="input" placeholder="https://...">
+</div>
+
+<div class="type-fields hidden" data-types="card">
+  <label>NOME NO CARTÃO</label><input id="cardHolder" class="input">
+  <label>NÚMERO DO CARTÃO</label><input id="cardNumber" class="input" inputmode="numeric">
+  <div class="form-two"><div><label>VALIDADE</label><input id="cardExpiry" class="input" placeholder="MM/AA"></div><div><label>CVV</label><input id="cardCvv" class="input" type="password" inputmode="numeric"></div></div>
+  <label>BANDEIRA / BANCO</label><input id="cardIssuer" class="input">
+</div>
+
+<div class="type-fields hidden" data-types="address">
+  <label>NOME COMPLETO</label><input id="addressName" class="input">
+  <label>ENDEREÇO</label><input id="addressStreet" class="input">
+  <div class="form-two"><div><label>CIDADE</label><input id="addressCity" class="input"></div><div><label>ESTADO</label><input id="addressState" class="input"></div></div>
+  <div class="form-two"><div><label>CEP</label><input id="addressZip" class="input"></div><div><label>PAÍS</label><input id="addressCountry" class="input" value="Brasil"></div></div>
+  <label>TELEFONE</label><input id="addressPhone" class="input">
+</div>
+
+<div class="type-fields hidden" data-types="document">
+  <label>TIPO DE DOCUMENTO</label><input id="documentType" class="input" placeholder="RG, CPF, CNH, Passaporte...">
+  <label>NÚMERO</label><input id="documentNumber" class="input">
+  <div class="form-two"><div><label>EMISSÃO</label><input id="documentIssue" class="input" type="date"></div><div><label>VALIDADE</label><input id="documentExpiry" class="input" type="date"></div></div>
+  <label>ÓRGÃO EMISSOR</label><input id="documentIssuer" class="input">
+</div>
+
+<div class="type-fields" data-types="login,note,card,address,document">
+  <label>NOTAS</label><textarea id="itemNotes" class="input" placeholder="Informações adicionais criptografadas"></textarea>
+</div>
+<div class="actions"><button id="cancelItem" class="btn secondary">CANCELAR</button><button id="saveItem" class="btn primary">SALVAR</button></div>
+</div></div>
+
+<div id="toast" class="toast"></div>
+<script src="/argon2.umd.min.js"></script>
+<script src="/app.js"></script>
+</body></html>

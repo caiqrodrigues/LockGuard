@@ -1,0 +1,1 @@
+{"name":"lockguard-web","version":"0.7.03","private":true,"type":"module","scripts":{"build":"node build.mjs"},"dependencies":{"hash-wasm":"4.12.0"}}
