@@ -35,3 +35,5 @@ supports-screens: 'small' 'normal' 'large' 'xlarge'
 supports-any-density: 'true'
 locales: '--_--'
 densities: '160'
+APK_SIZE_BYTES=19192
+APK_SHA256=878b21c76faba799149834402ade5de8a01a89752f9ebe0b0cc850c2af3aa527
