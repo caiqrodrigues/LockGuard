@@ -8,8 +8,8 @@ android {
         applicationId 'com.lockguard.app'
         minSdk 26
         targetSdk 35
-        versionCode 3
-        versionName '0.0.3'
+        versionCode 4
+        versionName '0.0.4'
     }
 
     signingConfigs {
@@ -43,5 +43,5 @@ android {
 
 dependencies {
     // A camada nativa não duplica a criptografia do cofre.
-    // O engine Web 0.7.3 executa Argon2id/AES-GCM, reduzindo tamanho e consumo do APK.
+    // O engine Web 0.7.4 executa Argon2id/AES-GCM e a gestão de conta sincronizada.
 }
