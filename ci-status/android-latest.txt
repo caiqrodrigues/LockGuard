@@ -1,8 +1,8 @@
 workflow=Build Android
-version=0.0.2
-commit=31ead2d1bce4878496e1b694cb45a3c294bff96a
+version=0.0.3
+commit=cf72b60f89a1d94f0a87b869912b4679ad149d07
 outcome=success
 exit_code=0
-run_id=32412488581
+run_id=32416285004
 run_attempt=1
-updated=2026-08-20T20:09:53Z
+updated=2026-08-20T20:51:57Z
