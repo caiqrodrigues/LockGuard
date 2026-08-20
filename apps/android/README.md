@@ -4,69 +4,52 @@ Aplicativo Android oficial do LockGuard.
 
 ## Versão atual
 
-**0.0.2**
+**0.0.4**
 
 ## Linha de versões
 
-### 0.0.1
-Primeiro APK funcional validado em aparelho real. Incluiu interface Android inicial com gerador e recursos básicos do cofre.
+### 0.0.4
+- Web Engine 0.7.4.
+- Área Conta com nome do perfil, telefone, alteração de e-mail, alteração da senha da conta e logout.
+- Senha mestra permanece fora deste fluxo e não é alterada.
+- Biometria opcional mantida para proteger a reentrada no aplicativo.
+- Safe area para barras do sistema mantida.
+- Assinatura de testes estável para atualização por cima da versão anterior.
+
+### 0.0.3
+- Biometria exigida novamente ao abrir/retomar quando habilitada.
+- Correção do enquadramento sob barra de status e navegação.
 
 ### 0.0.2
-A arquitetura passou a priorizar paridade com o produto Web:
+- Engine Web responsivo dentro da camada Android controlada pelo LockGuard.
+- Novo ícone com cadeado e identidade Black/Gold.
+- Suporte ao mesmo cofre cifrado e sincronizado.
+- Entrada por impressão digital/biometria opcional.
 
-- engine Web responsivo carregado dentro de uma camada Android controlada pelo LockGuard;
-- acesso às mesmas funções do Web sem duplicar regras de cofre em duas implementações diferentes;
-- novo ícone de aplicativo com cadeado;
-- identidade Black/Gold;
-- login da conta LockGuard quando não existe sessão válida;
-- suporte ao mesmo cofre cifrado e sincronizado;
-- camada nativa opcional de entrada por impressão digital/biometria;
-- Safe Browsing habilitado em Android compatível;
-- WebView debugging desabilitado em produção;
-- cookies de terceiros desabilitados;
-- otimizações de viewport e toque para telas móveis.
+### 0.0.1
+Primeiro APK funcional validado em aparelho real.
 
 ## Funções herdadas do Web
 
-A versão Android 0.0.2 utiliza o Web 0.7.3 como engine funcional, portanto recebe:
-
-- gerador de senhas;
-- teste de força;
-- login e conta;
-- cofre seguro;
-- logins;
-- notas;
-- cartões;
-- endereços;
-- documentos;
-- backup e restauração;
-- sincronização E2EE;
-- Security Dashboard;
-- monitoramento de vazamentos;
-- Argon2id;
-- AES-GCM 256.
+O Android 0.0.4 utiliza o Web 0.7.4 como engine funcional e recebe gerador, teste de força, login/conta, cofre, logins, notas, cartões, endereços, documentos, backup/restauração, sincronização E2EE, Security Dashboard, monitoramento de vazamentos, Argon2id e AES-GCM 256.
 
 ## Biometria
 
-A biometria é **opcional**. O usuário ativa ou desativa pelo botão de biometria no cabeçalho Android. Quando ativada, a abertura futura do aplicativo exige confirmação biométrica antes de liberar o engine do LockGuard.
-
-A implementação não grava a senha mestra em texto aberto. Caso a sessão Web tenha expirado, o login convencional continua sendo solicitado normalmente.
+A biometria é opcional. Quando habilitada, protege a abertura/retorno ao aplicativo. A senha mestra não é armazenada em texto aberto. Caso a sessão da conta expire, o login convencional continua sendo solicitado.
 
 ## Compatibilidade
 
 - Android 8.0+ / API 26+.
 - Android 9+ usa `BiometricPrompt` do sistema.
-- Android 8 usa `FingerprintManager` quando o hardware e impressões cadastradas estiverem disponíveis.
+- Android 8 usa `FingerprintManager` quando disponível.
 - Fallback para login/senha quando biometria não estiver disponível.
-- Interface dimensionada pelo Web responsivo, funcionando em celulares compactos, telas grandes e tablets.
+- Layout adaptável a celulares compactos, telas grandes e tablets.
 
 ## Build e assinatura para testes
 
 O workflow `Build Android` gera:
 
-- `LockGuard-v0.0.2-debug.apk` — instalável diretamente para testes.
-- `LockGuard-v0.0.2-unsigned.apk` — release sem assinatura de distribuição.
+- `LockGuard-v0.0.4-debug.apk` — instalável diretamente para testes e atualização.
+- `LockGuard-v0.0.4-unsigned.apk` — release sem assinatura de distribuição.
 
-A partir da linha 0.0.2, o CI preserva uma identidade de assinatura de testes em cache privado do GitHub Actions e valida o APK com `apksigner` e `aapt` antes de publicar o artefato. A identidade de assinatura estável foi inicializada na v0.0.2 e deve ser reutilizada nas próximas builds de teste para permitir atualização por cima.
-
-O último estado de build é registrado automaticamente em `ci-status/android-latest.txt`, e os dados de validação ficam em `ci-status/android-apk-validation.txt`.
+O CI preserva a identidade de assinatura de testes no GitHub Actions e valida o APK com `apksigner` e `aapt` antes de publicar o artefato.
