@@ -1,7 +1,7 @@
 workflow=Build Web and Extension Packages
 web_version=0.7.4
 extension_version=0.0.2
-commit=46f64ba9a1a85a52465c15043a9164a4ffd5e3a8
+commit=9b924b3a4c63a924ea0dce224a235bff1c12674e
 outcome=success
-run_id=32476476772
-updated=2026-08-21T11:16:54Z
+run_id=32482453112
+updated=2026-08-21T12:33:49Z
