@@ -6,10 +6,10 @@ Gerenciador de senhas multiplataforma com identidade Black/Gold, cofre criptogra
 
 | Plataforma | Versão | Status |
 |---|---:|---|
-| Web | **0.7.3** | ✅ Produção |
-| Extensão | **0.0.1** | ✅ Funcional / Opera, Chrome e Edge |
-| Windows | **0.0.1** | ✅ Build automatizado / Portable + Setup |
-| Android | **0.0.2** | ✅ Build automatizado / APK |
+| Web | **0.7.4** | ✅ Produção / Vercel |
+| Extensão | **0.0.2** | ✅ Manifest V3 |
+| Windows | **0.0.2** | ✅ Tauri / Portable + Setup |
+| Android | **0.0.4** | ✅ APK / biometria / conta |
 
 > Cada plataforma possui sua própria linha de versão. Uma alteração em uma plataforma não obriga incremento nas demais.
 
@@ -27,16 +27,17 @@ Gerenciador de senhas multiplataforma com identidade Black/Gold, cofre criptogra
 - Extensão Manifest V3 com autofill.
 - Aplicativo Windows via Tauri.
 - Aplicativo Android otimizado com paridade funcional do Web e entrada biométrica opcional.
-- CI/CD com GitHub Actions para validação e builds.
+- Gestão de conta com perfil, telefone, alteração de e-mail e senha da conta; senha mestra permanece independente.
+- CI/CD com GitHub Actions e deploy Web via Vercel conectado ao GitHub.
 
 ## Arquitetura
 
 ```text
 LockGuard
-├── apps/web                 Web 0.7.3 / Vercel
-├── apps/browser-extension   Extensão 0.0.1 / Manifest V3
-├── apps/windows             Windows 0.0.1 / Tauri 2
-├── apps/android             Android 0.0.2
+├── apps/web                 Web 0.7.4 / Vercel
+├── apps/browser-extension   Extensão 0.0.2 / Manifest V3
+├── apps/windows             Windows 0.0.2 / Tauri 2
+├── apps/android             Android 0.0.4
 ├── docs                     Segurança e arquitetura
 └── .github/workflows        CI, Windows, Android e sincronização Web
 ```
@@ -57,32 +58,27 @@ O Web é a implementação funcional de referência. O Android usa uma camada na
 
 O LockGuard utiliza arquitetura de criptografia client-side: o conteúdo do cofre é cifrado antes da sincronização. O servidor recebe o material cifrado e metadados necessários à sincronização. O projeto não deve ser apresentado como formalmente auditado enquanto não passar por auditoria independente.
 
-Mais detalhes em [`docs/SECURITY.md`](docs/SECURITY.md) e [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+Mais detalhes em `docs/SECURITY.md` e `docs/ARCHITECTURE.md`.
 
 ## Builds
 
 ### Windows
 
-O workflow `Build Windows` gera:
-
-- `LockGuard-Portable.exe`
-- `LockGuard-Setup.exe`
+O workflow `Build Windows` gera os artefatos Windows (Portable e Setup).
 
 ### Android
 
-O workflow `Build Android` gera:
-
-- `LockGuard-v0.0.2-debug.apk` — instalação direta para testes.
-- `LockGuard-v0.0.2-unsigned.apk` — release sem assinatura de distribuição.
+O workflow `Build Android` gera o APK de teste instalável e o artefato release correspondente.
 
 ## Produção Web
 
-**https://lockguardapp.vercel.app**
+https://lockguardapp.vercel.app
 
 ## Histórico Android
 
 - **0.0.1** — primeiro APK funcional validado em aparelho real.
 - **0.0.2** — novo ícone, login inicial, redesign, paridade com Web e biometria opcional.
+- **0.0.4** — linha Android atual com correções de sessão, conta e navegação.
 
 ## Nota de projeto
 
