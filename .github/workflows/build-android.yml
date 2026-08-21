@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - "apps/android/**"
+      - "apps/web/**"
       - ".github/workflows/build-android.yml"
 
 permissions:
@@ -51,6 +52,38 @@ jobs:
             -validity 10000 \
             -dname "CN=LockGuard Android Debug,O=LockGuard,C=BR"
 
+      - name: Prepare embedded Web 0.7.4 engine
+        shell: bash
+        run: |
+          set -euo pipefail
+          ASSETS="apps/android/app/src/main/assets/web"
+          rm -rf "$ASSETS"
+          mkdir -p "$ASSETS"
+          cp apps/web/index.html apps/web/style.css apps/web/app.js apps/web/account.js apps/web/argon2.umd.min.js apps/web/favicon.svg "$ASSETS/"
+          if [ -f apps/web/og-image.png ]; then cp apps/web/og-image.png "$ASSETS/"; fi
+          python3 - <<'PY'
+          from pathlib import Path
+          root=Path('apps/android/app/src/main/assets/web')
+          idx=root/'index.html'
+          s=idx.read_text(encoding='utf-8')
+          s=s.replace('href="/style.css"','href="style.css"')
+          s=s.replace('href="/favicon.svg"','href="favicon.svg"')
+          s=s.replace('src="/argon2.umd.min.js"','src="argon2.umd.min.js"')
+          s=s.replace('src="/app.js"','src="app.js"')
+          if 'account.js' not in s:
+              s=s.replace('<script src="app.js"></script>','<script src="app.js"></script>\n<script src="account.js"></script>')
+          s=s.replace('Versão 0.7.02','Versão 0.7.4')
+          idx.write_text(s,encoding='utf-8')
+          app=root/'app.js'
+          a=app.read_text(encoding='utf-8')
+          a=a.replace("const APP_VERSION='0.7.02';","const APP_VERSION='0.7.4';")
+          a=a.replace("encodeURIComponent(location.origin)","encodeURIComponent('https://lockguardapp.vercel.app')")
+          app.write_text(a,encoding='utf-8')
+          PY
+          test -s "$ASSETS/account.js"
+          grep -q 'account.js' "$ASSETS/index.html"
+          grep -q "APP_VERSION='0.7.4'" "$ASSETS/app.js"
+
       - name: Build APKs
         id: build
         shell: bash
@@ -75,6 +108,10 @@ jobs:
           grep -q "package: name='com.lockguard.app'" android-apk-validation.txt
           grep -q "versionName='0.0.4'" android-apk-validation.txt
           grep -q "CN=LockGuard Android Debug" android-apk-validation.txt
+          unzip -l "$APK" | grep -q 'assets/web/account.js'
+          unzip -l "$APK" | grep -q 'assets/web/index.html'
+          echo "EMBEDDED_WEB_VERSION=0.7.4" | tee -a android-apk-validation.txt
+          echo "ACCOUNT_MANAGER=embedded" | tee -a android-apk-validation.txt
           echo "APK_SIZE_BYTES=$(stat -c%s "$APK")" | tee -a android-apk-validation.txt
           echo "APK_SHA256=$(sha256sum "$APK" | awk '{print $1}')" | tee -a android-apk-validation.txt
 
@@ -104,6 +141,8 @@ jobs:
           {
             echo "workflow=Build Android"
             echo "version=0.0.4"
+            echo "web_version=0.7.4"
+            echo "account_manager=embedded"
             echo "commit=${GITHUB_SHA}"
             echo "outcome=${outcome}"
             echo "exit_code=${exit_code}"
