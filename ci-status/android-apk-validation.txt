@@ -35,5 +35,7 @@ supports-screens: 'small' 'normal' 'large' 'xlarge'
 supports-any-density: 'true'
 locales: '--_--'
 densities: '160'
-APK_SIZE_BYTES=19696
-APK_SHA256=50f92a53d78e45a48d497291f46ff0adceec0da5d8f09db32b8220a82420c8f8
+EMBEDDED_WEB_VERSION=0.7.4
+ACCOUNT_MANAGER=embedded
+APK_SIZE_BYTES=92638
+APK_SHA256=220e60d8b0ec9d4e1e2114956013b53bc2b87e8c98e99d6c14655e848319a4f7
