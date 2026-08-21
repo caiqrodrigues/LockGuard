@@ -7,4 +7,5 @@ const account = await readFile('account.js','utf8');
 await writeFile('dist/app.js', app + '\n' + account + '\n', 'utf8');
 let index = await readFile('dist/index.html','utf8');
 index = index.replace(/Versão 0\.7\.(?:02|03|3|4)/g, 'Versão 0.7.4');
+index = index.replace(/\s*<script src="\/account\.js"><\/script>/g, '');
 await writeFile('dist/index.html', index, 'utf8');
