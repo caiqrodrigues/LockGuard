@@ -1,6 +1,6 @@
 package com.lockguard.app;
 
-// Android 0.0.4 hotfix rebuild marker: account manager + home-on-logo.
+// Android 0.0.4 corrected: embedded Web 0.7.4 engine + account manager + home-on-logo.
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.KeyguardManager;
@@ -28,7 +28,7 @@ import android.widget.Toast;
 public class MainActivity extends Activity {
     private static final String VERSION = "0.0.4";
     private static final String WEB_VERSION = "0.7.4";
-    private static final String URL = "https://lockguardapp.vercel.app";
+    private static final String URL = "file:///android_asset/web/index.html";
     private static final String PREFS = "lockguard_android";
     private static final String PREF_BIOMETRIC = "biometric_enabled";
     private static final String PREF_BIOMETRIC_OFFERED = "biometric_offered";
@@ -73,10 +73,10 @@ public class MainActivity extends Activity {
         forceWebLogin=forceLogin;LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setBackgroundColor(BG);applySafeInsets(root);
         LinearLayout header=new LinearLayout(this);header.setGravity(Gravity.CENTER_VERTICAL);header.setPadding(dp(14),dp(8),dp(10),dp(8));header.setBackgroundColor(Color.rgb(8,8,8));
         TextView icon=text("🔒",21,GOLD);header.addView(icon,new LinearLayout.LayoutParams(dp(34),-2));TextView title=text("LOCKGUARD",17,GOLD2);title.setLetterSpacing(.1f);header.addView(title,new LinearLayout.LayoutParams(0,-2,1));TextView ver=text("v"+VERSION,10,Color.GRAY);ver.setPadding(dp(4),0,dp(6),0);header.addView(ver,new LinearLayout.LayoutParams(-2,-2));
-        View.OnClickListener homeClick=v->{if(web!=null){web.evaluateJavascript("try{if(typeof switchView==='function'){switchView('generator');window.scrollTo(0,0);}else{location.href='/';}}catch(e){location.href='/';}",null);}};
+        View.OnClickListener homeClick=v->{if(web!=null){web.evaluateJavascript("try{if(typeof switchView==='function'){switchView('generator');window.scrollTo(0,0);}else{location.href='index.html';}}catch(e){location.href='index.html';}",null);}};
         icon.setOnClickListener(homeClick);title.setOnClickListener(homeClick);icon.setClickable(true);title.setClickable(true);
         Button bio=new Button(this);bio.setText("◎");bio.setTextSize(18);bio.setTextColor(GOLD2);bio.setBackgroundColor(Color.TRANSPARENT);bio.setContentDescription("Configurar biometria");header.addView(bio,new LinearLayout.LayoutParams(dp(46),dp(42)));root.addView(header,new LinearLayout.LayoutParams(-1,-2));
-        web=new WebView(this);web.setBackgroundColor(BG);web.addJavascriptInterface(new AndroidBridge(),"LockGuardAndroid");WebSettings s=web.getSettings();s.setJavaScriptEnabled(true);s.setDomStorageEnabled(true);s.setDatabaseEnabled(true);s.setLoadsImagesAutomatically(true);s.setUseWideViewPort(false);s.setLoadWithOverviewMode(false);s.setBuiltInZoomControls(false);s.setDisplayZoomControls(false);s.setMediaPlaybackRequiresUserGesture(true);s.setUserAgentString(s.getUserAgentString()+" LockGuardAndroid/"+VERSION);if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.O)s.setSafeBrowsingEnabled(true);
+        web=new WebView(this);web.setBackgroundColor(BG);web.addJavascriptInterface(new AndroidBridge(),"LockGuardAndroid");WebSettings s=web.getSettings();s.setJavaScriptEnabled(true);s.setDomStorageEnabled(true);s.setDatabaseEnabled(true);s.setLoadsImagesAutomatically(true);s.setAllowFileAccess(true);s.setAllowContentAccess(false);s.setUseWideViewPort(false);s.setLoadWithOverviewMode(false);s.setBuiltInZoomControls(false);s.setDisplayZoomControls(false);s.setMediaPlaybackRequiresUserGesture(true);s.setUserAgentString(s.getUserAgentString()+" LockGuardAndroid/"+VERSION);if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.O)s.setSafeBrowsingEnabled(true);
         CookieManager.getInstance().setAcceptCookie(true);CookieManager.getInstance().setAcceptThirdPartyCookies(web,false);WebView.setWebContentsDebuggingEnabled(false);web.setWebChromeClient(new WebChromeClient());
         web.setWebViewClient(new WebViewClient(){@Override public void onPageFinished(WebView view,String url){if(forceWebLogin){forceWebLogin=false;web.evaluateJavascript("try{localStorage.removeItem('lockguard.auth.v1');sessionStorage.clear();}catch(e){}",null);web.postDelayed(()->injectMobileEnhancements(),150);}else injectMobileEnhancements();}});
         root.addView(web,new LinearLayout.LayoutParams(-1,0,1));setContentView(root);web.loadUrl(URL);
@@ -85,10 +85,9 @@ public class MainActivity extends Activity {
 
     private void injectMobileEnhancements(){
         if(web==null)return;String js="(function(){try{"+
-                "if(!document.getElementById('lockguard-android-style')){var st=document.createElement('style');st.id='lockguard-android-style';st.textContent='html,body{overscroll-behavior:none} body{padding-bottom:18px!important} button,input,select,textarea{min-height:42px} @media(max-width:700px){.wrap,.shell,.container{max-width:100%!important;width:100%!important}.main{padding-left:10px!important;padding-right:10px!important}}';document.head.appendChild(st);}"+
-                "var f=document.querySelectorAll('*');for(var j=0;j<f.length;j++){if(f[j].childNodes.length===1&&f[j].childNodes[0].nodeType===3&&f[j].textContent.trim()==='Versão "+WEB_VERSION+"'){f[j].textContent='Web Engine "+WEB_VERSION+"';}}"+
-                "var accountBtn=document.getElementById('accountBtn');if(accountBtn){accountBtn.onclick=function(ev){ev.preventDefault();ev.stopPropagation();try{if(window.LockGuardAccount&&typeof window.LockGuardAccount.open==='function'){window.LockGuardAccount.open();return false;}if(typeof authOpen==='function'&&(!window.auth||!auth.user)){authOpen('login');return false;}}catch(e){}return false;};}"+
-                "var logos=document.querySelectorAll('.brand,.logo,.brand-lock,.brand-name');for(var i=0;i<logos.length;i++){logos[i].style.cursor='pointer';logos[i].onclick=function(){try{if(typeof switchView==='function'){switchView('generator');window.scrollTo(0,0);}}catch(e){}};}"+
+                "if(!document.getElementById('lockguard-android-style')){var st=document.createElement('style');st.id='lockguard-android-style';st.textContent='html,body{overscroll-behavior:none} body{padding-bottom:18px!important} #versionLabel{display:none!important} button,input,select,textarea{min-height:42px} @media(max-width:700px){.wrap,.shell,.container{max-width:100%!important;width:100%!important}.main{padding-left:10px!important;padding-right:10px!important}}';document.head.appendChild(st);}"+
+                "var accountBtn=document.getElementById('accountBtn');if(accountBtn){accountBtn.textContent=(typeof auth!=='undefined'&&auth.user)?'CONTA':'ENTRAR';accountBtn.onclick=function(ev){ev.preventDefault();ev.stopPropagation();try{if(typeof auth!=='undefined'&&auth.user&&window.LockGuardAccount&&typeof window.LockGuardAccount.open==='function'){window.LockGuardAccount.open();return false;}if(typeof authOpen==='function'){authOpen('login');return false;}}catch(e){}return false;};}"+
+                "var logos=document.querySelectorAll('.brand,.logo');for(var i=0;i<logos.length;i++){logos[i].style.cursor='pointer';logos[i].onclick=function(ev){if(ev){ev.preventDefault();ev.stopPropagation();}try{if(typeof switchView==='function'){switchView('generator');window.scrollTo(0,0);}}catch(e){}return false;};}"+
                 "var notify=function(){try{if(localStorage.getItem('lockguard.auth.v1')&&window.LockGuardAndroid){window.LockGuardAndroid.onSessionDetected();}}catch(e){}};notify();"+
                 "if(!window.__lockguardStorageHook){window.__lockguardStorageHook=true;var old=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){old.apply(this,arguments);if(k==='lockguard.auth.v1'){setTimeout(notify,50);}};}"+
                 "var session=localStorage.getItem('lockguard.auth.v1');if(!session&&typeof authOpen==='function'){setTimeout(function(){authOpen('login');},200);}"+
