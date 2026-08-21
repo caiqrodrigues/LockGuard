@@ -4,7 +4,8 @@ for (const f of ['index.html','app.js','style.css','favicon.svg','og-image.png',
 let app = await readFile('dist/app.js','utf8');
 app = app.replace(/const APP_VERSION='0\.7\.(?:02|03|3|4)';/, "const APP_VERSION='0.7.4';");
 const account = await readFile('account.js','utf8');
-await writeFile('dist/app.js', app + '\n' + account + '\n', 'utf8');
+const homeNav = await readFile('home-nav.js','utf8');
+await writeFile('dist/app.js', app + '\n' + account + '\n' + homeNav + '\n', 'utf8');
 let index = await readFile('dist/index.html','utf8');
 index = index.replace(/Versão 0\.7\.(?:02|03|3|4)/g, 'Versão 0.7.4');
 index = index.replace(/\s*<script src="\/account\.js"><\/script>/g, '');
